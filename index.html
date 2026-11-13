@@ -255,34 +255,62 @@ input[type=date].inp::-webkit-date-and-time-value,input[type=time].inp::-webkit-
 .field>label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hint{margin-top:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,var(--card));border-left:3px solid var(--accent);font-size:12.5px;line-height:1.45;color:var(--text);animation:fadeUp .25s var(--ease) both}
 .hint b{color:var(--accent)}
-/* Lock */
-.lock{position:fixed;inset:0;z-index:100;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 16%,var(--bg)),var(--bg) 62%);display:flex;flex-direction:column;align-items:center;padding:calc(30px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom));overflow:hidden;color:var(--text)}
-.lock .trk{position:absolute;left:-10%;right:-10%;bottom:0;height:46%;pointer-events:none;opacity:.9;transition:transform 1s var(--ease)}
-.lock .trk svg{width:100%;height:100%}
-.lock .trk .dash{stroke-dasharray:10 16;animation:lane 1.4s linear infinite}
-.lock.go .trk .dash{animation-duration:.18s}
-.lock.go .trk{transform:scale(1.35) translateY(8%)}
-@keyframes lane{to{stroke-dashoffset:-52}}
-.lock .lg svg{width:64px;height:64px;border-radius:18px;box-shadow:0 10px 36px color-mix(in srgb,var(--accent) 45%,transparent);transition:transform .8s var(--ease)}
-.lock.go .lg svg{transform:scale(1.25) rotate(-6deg)}
+/* Lock – Zielband */
+.lock{position:fixed;inset:0;z-index:100;overflow:hidden;color:var(--text);touch-action:none}
+.lock .door{position:absolute;top:0;bottom:0;width:50.5%;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 16%,var(--bg)),var(--bg) 62%);background-size:200% 100%;z-index:0;will-change:transform}
+.lock .door.l{left:0;background-position:0 0;box-shadow:inset -1px 0 0 color-mix(in srgb,var(--text) 6%,transparent)}
+.lock .door.r{right:0;background-position:100% 0}
+.lock .door::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 46px,color-mix(in srgb,var(--accent) 5%,transparent) 46px 48px);opacity:.7}
+.lock .lc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(30px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom))}
+.lock .ver{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:3;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);background:color-mix(in srgb,var(--card) 70%,transparent);padding:4px 9px;border-radius:99px}
+.lock .ver.up{color:var(--accentText);background:var(--accent)}
+.lock .lg svg{width:64px;height:64px;border-radius:18px;box-shadow:0 10px 36px color-mix(in srgb,var(--accent) 45%,transparent)}
 .lock h3{margin:14px 0 2px;font-size:24px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em}
+.lock .tape{position:absolute;left:0;right:0;height:30px;z-index:1;pointer-events:none}
+.lock .th{position:absolute;top:0;height:30px;width:52%;background:repeating-conic-gradient(#121212 0 25%,#f4f4f4 0 50%) 0 0/15px 15px;border-top:3px solid var(--accent);border-bottom:3px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.45);will-change:transform}
+.lock .th.l{left:-1%;transform-origin:0 50%}.lock .th.r{right:-1%;transform-origin:100% 50%}
+.lock .tape .tag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--accent);color:var(--accentText);font-size:11px;font-weight:900;font-style:italic;letter-spacing:.14em;padding:5px 10px;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:2}
 .lights{display:flex;gap:14px;margin:22px 0 8px;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,#000 45%,var(--card));box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
 .lights i{width:22px;height:22px;border-radius:50%;background:#2a2e36;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);transition:background .15s,box-shadow .15s}
 .lights i.on{background:#ff3b3b;box-shadow:0 0 16px #ff3b3b,inset 0 -2px 4px rgba(0,0,0,.3)}
 .lights i.g{background:#30e070;box-shadow:0 0 20px #30e070}
 .lights.shake{animation:shake .45s}
 @keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
-.keys{display:grid;grid-template-columns:repeat(3,74px);gap:14px;margin-top:auto;margin-bottom:8px;position:relative;z-index:2}
-.keys button{width:74px;height:74px;border-radius:50%;border:1px solid color-mix(in srgb,var(--text) 10%,transparent);background:color-mix(in srgb,var(--card) 75%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:28px;font-weight:700;cursor:pointer;transition:transform .1s,background .15s}
+.keys{display:grid;grid-template-columns:repeat(3,74px);gap:14px;margin-top:auto;margin-bottom:6px}
+.keys button{width:74px;height:74px;border-radius:50%;border:1px solid color-mix(in srgb,var(--text) 10%,transparent);background:color-mix(in srgb,var(--card) 80%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:28px;font-weight:700;cursor:pointer;transition:transform .1s,background .15s;-webkit-user-select:none;user-select:none}
 .keys button:active{transform:scale(.9);background:var(--accent);color:var(--accentText)}
 .keys button.ghost{background:none;border:0;font-size:15px}
-.gotxt{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) scale(.3);font-size:110px;font-weight:900;font-style:italic;color:var(--accent);opacity:0;pointer-events:none;text-shadow:0 0 40px color-mix(in srgb,var(--accent) 60%,transparent);letter-spacing:-.04em}
-.lock.go .gotxt{animation:gopop .9s var(--ease) forwards}
-@keyframes gopop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4)}}
-.lock.out{animation:lockout .65s var(--ease) forwards}
-@keyframes lockout{to{opacity:0;transform:translateY(-6%) scale(1.08);filter:blur(10px)}}
-.lock .forgot{background:none;border:0;color:var(--muted);font-size:13px;font-weight:700;margin-top:6px;cursor:pointer;position:relative;z-index:2}
+.lock .forgot{background:none;border:0;color:var(--muted);font-size:13px;font-weight:700;margin-top:4px;cursor:pointer}
 .lock .lsub{color:var(--muted);font-size:14px;text-align:center;max-width:300px}
+.lock .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:5;pointer-events:none}
+.lock .blogo{position:absolute;left:50%;z-index:4;opacity:0;pointer-events:none;transform:translate(-50%,-50%)}
+.lock .blogo svg{width:120px;height:120px;border-radius:32px}
+.lock.burst{animation:lshake .35s}
+.lock.burst .flash{animation:flash .45s ease-out}
+.lock.burst .lc{animation:lcout .3s ease-in forwards}
+.lock.burst .th.l{animation:tapeL 1s cubic-bezier(.2,.7,.3,1) forwards}
+.lock.burst .th.r{animation:tapeR 1s cubic-bezier(.2,.7,.3,1) forwards}
+.lock.burst .tape .tag{animation:tagUp .8s cubic-bezier(.2,.7,.3,1) forwards}
+.lock.burst .door.l{animation:doorL .9s .3s cubic-bezier(.6,0,.3,1) forwards}
+.lock.burst .door.r{animation:doorR .9s .3s cubic-bezier(.6,0,.3,1) forwards}
+.lock.burst .blogo{animation:blogo .95s .1s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.lock .runner{position:absolute;left:0;z-index:4;font-size:92px;line-height:1;opacity:0;pointer-events:none;transform:translateX(-30vw) scaleX(-1);filter:drop-shadow(-18px 0 0 color-mix(in srgb,var(--accent) 35%,transparent)) drop-shadow(-36px 0 0 color-mix(in srgb,var(--accent) 15%,transparent))}
+.lock.run .runner{animation:runIn .42s cubic-bezier(.35,0,.7,1) forwards}
+.lock.burst .runner{animation:runOut .55s cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes runIn{0%{opacity:1;transform:translateX(-30vw) scaleX(-1)}100%{opacity:1;transform:translateX(calc(50vw - 46px)) scaleX(-1)}}
+@keyframes runOut{0%{opacity:1;transform:translateX(calc(50vw - 46px)) scaleX(-1)}100%{opacity:1;transform:translateX(115vw) scaleX(-1.4) scaleY(1.4)}}
+@keyframes lshake{20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+@keyframes lcout{to{opacity:0;transform:scale(1.06)}}
+@keyframes tapeL{0%{transform:none}25%{transform:translateX(-4%) rotate(-6deg)}100%{transform:translate(-70vw,40vh) rotate(-70deg);opacity:.0}}
+@keyframes tapeR{0%{transform:none}25%{transform:translateX(4%) rotate(6deg)}100%{transform:translate(70vw,40vh) rotate(70deg);opacity:.0}}
+@keyframes tagUp{to{transform:translate(-50%,-260%) scale(1.6) rotate(-8deg);opacity:0}}
+@keyframes doorL{to{transform:translateX(-104%) skewY(-4deg)}}
+@keyframes doorR{to{transform:translateX(104%) skewY(4deg)}}
+@keyframes blogo{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(-6deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.2) rotate(4deg)}}
+.sheet{overscroll-behavior:contain;will-change:transform}
+.grab{position:relative}.grab::before{content:"";position:absolute;inset:-14px -60px}
+button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipulation}
 /* Wrapped */
 .wov{position:fixed;inset:0;z-index:97;background:#000;display:flex;justify-content:center}
 .wframe{position:relative;width:100%;max-width:460px;height:100%;overflow:hidden}
@@ -345,7 +373,7 @@ input[type=date].inp::-webkit-date-and-time-value,input[type=time].inp::-webkit-
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='4.0';
+const KEY='velox.v1',VERSION='5.1';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -971,6 +999,7 @@ function todos(){const st=S.settings,t=ymd(today()),h=new Date().getHours(),out=
   {const td=today(),pm=new Date(td.getFullYear(),td.getMonth()-1,1),key='wm'+pm.getFullYear()+'-'+pm.getMonth();if(td.getDate()<=7&&!S.seen[key]&&periodSessions(pm,new Date(td.getFullYear(),td.getMonth(),1)).length>=3)out.unshift({i:'sparkle',t:`Dein ${MONTHS[pm.getMonth()]}-Rückblick ist da 🎬`,d:'Deine Highlights im Story-Format – antippen und durchklicken.',a:'wrapLastMonth'});
    const yk='wy'+(td.getMonth()===11?td.getFullYear():td.getFullYear()-1);if(((td.getMonth()===11&&td.getDate()>=15)||(td.getMonth()===0&&td.getDate()<=10))&&!S.seen[yk]&&S.sessions.length>=10)out.unshift({i:'trophy',t:`Dein Sportjahr ${yk.slice(2)} 🎉`,d:'Der große Jahresrückblick – alle Highlights.',a:'wrapYear'})}
   if(L.daysDiffer)out.push({i:'brain',t:'Trainingstage anpassen?',d:`Du trainierst meist ${L.days.map(d=>WD[d]).join(', ')} – soll der Plan das übernehmen?`,a:'applyDays'});
+  if(updAvail())out.unshift({i:'download',t:`Update verfügbar: v${updAvail()} 🚀`,d:'Neue Funktionen & Verbesserungen – deine Daten bleiben erhalten.',a:'openUpdate'});
   return out}
 function vHome(){
   logPlan();const t0=today(),tk=ymd(t0),P=plan(),n=P[0],f=formNow(),fl=formLabel(f.tsb),ph=phase(),R=readiness(),G=greeting();
@@ -1166,6 +1195,9 @@ function vSet(){
     <button class="btn sm" style="margin-top:10px" data-act="resetTheme">Design zurücksetzen</button></div>
   <h2>${ic('book')} Wissen<span class="line"></span></h2>
   <div class="card list"><div class="item" data-act="lexicon">${sIco('other')}<div class="grow"><div class="t">Lexikon</div><div class="m">${Object.keys(GL).length} Fachbegriffe einfach erklärt</div></div>${ic('chev','muted')}</div></div>
+  <h2>${ic('download')} App & Version<span class="line"></span></h2>
+  <div class="card"><div class="row between"><div><b>VELOX v${VERSION}</b><div class="tiny muted">${updAvail()?'Neue Version v'+updAvail()+' verfügbar':localStorage.getItem('velox.lastCheck')?'Zuletzt geprüft: '+new Date(+localStorage.getItem('velox.lastCheck')).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Noch nicht geprüft'}</div></div>${updAvail()?'<span class="badge acc">Update</span>':'<span class="badge good">Aktuell</span>'}</div>
+    <div class="btnrow">${updAvail()?`<button class="btn acc" data-act="doUpdate">${ic('download')} Jetzt aktualisieren</button>`:`<button class="btn" data-act="checkUpdate">${ic('sync')} Nach Updates suchen</button>`}</div></div>
   <h2>🔢 App-Schutz<span class="line"></span></h2>
   <div class="card"><div class="row between"><div><b>PIN-Sperre</b><div class="tiny muted">${pinOn()?'Aktiv – beim Öffnen und nach 2 Min. im Hintergrund':'Aus – jeder mit deinem Handy kann die App öffnen'}</div></div><span class="badge ${pinOn()?'good':''}">${pinOn()?'An':'Aus'}</span></div>
     <div class="btnrow">${pinOn()?`<button class="btn" data-act="pinChange">PIN ändern</button><button class="btn ghost" data-act="pinOff">Deaktivieren</button>`:`<button class="btn acc" data-act="pinChange">PIN festlegen</button>`}</div></div>
@@ -1196,8 +1228,8 @@ function applyTheme(){const r=document.documentElement.style,t=S.settings.theme;
   const key=t.accent+t.accentText;if(applyTheme.k!==key){applyTheme.k=key;setIcons()}}
 function setIcons(){const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(logoSVG(S.settings.theme.accent,S.settings.theme.accentText,180));$('#favicon').href=url;
   }
-function confetti(){if(!S.settings.anim)return;const c=$('#confetti'),x=c.getContext('2d');c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  const cols=[S.settings.theme.accent,...Object.values(S.settings.sportColors).slice(0,4)],ps=Array.from({length:110},()=>({x:innerWidth/2,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,r:Math.random()*6+3,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.4}));
+function confetti(o={}){if(!S.settings.anim)return;const c=$('#confetti'),x=c.getContext('2d');c.style.zIndex=o.z||90;c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const cols=[S.settings.theme.accent,...Object.values(S.settings.sportColors).slice(0,4)],ps=Array.from({length:o.n||110},()=>({x:o.x??innerWidth/2,y:o.y??innerHeight*.45,vx:(Math.random()-.5)*(o.p||14),vy:-Math.random()*(o.p||14)-4,r:Math.random()*6+3,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.4}));
   const t0=performance.now();(function f(t){const p=(t-t0)/1600;x.clearRect(0,0,innerWidth,innerHeight);ps.forEach(q=>{q.vy+=.42;q.vx*=.99;q.x+=q.vx;q.y+=q.vy;q.a+=q.va;x.save();x.globalAlpha=Math.max(0,1-p);x.translate(q.x,q.y);x.rotate(q.a);x.fillStyle=q.c;x.fillRect(-q.r/2,-q.r/4,q.r,q.r/2);x.restore()});if(p<1)requestAnimationFrame(f);else x.clearRect(0,0,innerWidth,innerHeight)})(t0)}
 
 /* =====================================================================
@@ -1521,7 +1553,9 @@ function openWrap(type,y,m){const a=type==='month'?new Date(y,m,1):new Date(y,0,
   let i=0,timer;const ov=document.createElement('div');ov.className='wov';document.body.appendChild(ov);
   const show=()=>{clearTimeout(timer);ov.innerHTML=`<div class="wframe">${SL[i]}<div class="wbars">${SL.map((_,j)=>`<i class="${j<i?'done':j===i?'act':''}"><b></b></i>`).join('')}</div><div class="wtap"><div data-w="-1"></div><div data-w="1"></div></div><button class="wx" aria-label="Schließen">✕</button></div>`;
     animate(ov);$$('[data-w]',ov).forEach(e=>e.onclick=()=>{i+=+e.dataset.w;if(i<0)i=0;if(i>=SL.length){ov.remove();return}show()});ov.querySelector('.wx').onclick=()=>{clearTimeout(timer);ov.remove()};
-    timer=setTimeout(()=>{if(!ov.isConnected)return;if(i<SL.length-1){i++;show()}},6500)};show()}
+    timer=setTimeout(()=>{if(!ov.isConnected)return;if(i<SL.length-1){i++;show()}},6500)};show();
+  let wy=null;ov.addEventListener('touchstart',e=>{wy=e.touches[0].clientY},{passive:true});ov.addEventListener('touchmove',e=>{if(wy==null)return;const d=e.touches[0].clientY-wy;if(d>0){ov.style.transform=`translateY(${d}px) scale(${1-d/2000})`;ov.style.transition='none'}},{passive:true});
+  ov.addEventListener('touchend',e=>{if(wy==null)return;const d=(e.changedTouches[0].clientY-wy);wy=null;if(d>120){clearTimeout(timer);ov.style.transition='transform .25s';ov.style.transform='translateY(100%)';setTimeout(()=>ov.remove(),240)}else{ov.style.transition='transform .25s';ov.style.transform=''}})}
 
 /* =====================================================================
    PIN-SPERRE mit Startampel
@@ -1531,19 +1565,24 @@ const pinData=()=>{try{return JSON.parse(localStorage.getItem(PINKEY))}catch(e){
 const pinOn=()=>{const p=pinData();return!!(p&&p.hash)};
 async function hashPin(pin,salt){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin+':velox'));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of salt+pin)h=((h*33)^c.charCodeAt(0))>>>0;return'f'+h}}
 function showLock(mode){LK={mode,entry:'',first:''};let el=$('#lock');if(!el){el=document.createElement('div');el.id='lock';document.body.appendChild(el)}el.className='lock';renderLock()}
-function renderLock(){const el=$('#lock'),m=LK.mode,th=S.settings.theme;
+function renderLock(){const el=$('#lock'),m=LK.mode,th=S.settings.theme,lat=localStorage.getItem('velox.latest');
   const title={unlock:'Startbereit?',create:'PIN festlegen',confirm:'PIN wiederholen',disable:'PIN bestätigen',forgot:'PIN vergessen?'}[m];
   const sub={unlock:`${S.settings.name?esc(S.settings.name)+', g':'G'}ib deine PIN ein – dann geht's los.`,create:'Wähle 4 Ziffern. Sie schützen VELOX auf diesem Gerät.',confirm:'Zur Sicherheit noch einmal.',disable:'Aktuelle PIN eingeben, um die Sperre abzuschalten.',forgot:''}[m];
-  const lanes=[-260,-150,-50,50,150,260];
-  el.innerHTML=`<div class="trk"><svg viewBox="0 0 400 300" preserveAspectRatio="none"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${th.accent}" stop-opacity="0"/><stop offset="1" stop-color="${th.accent}" stop-opacity=".22"/></linearGradient></defs><path d="M170 0 L230 0 L460 300 L-60 300Z" fill="url(#tg)"/>${lanes.map(x=>`<line x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="${th.accent}" stroke-opacity=".35" stroke-width="1.4"/>`).join('')}${[-100,0,100,205].map(x=>`<line class="dash" x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="#fff" stroke-opacity=".5" stroke-width="2.4"/>`).join('')}</svg></div>
-  <div class="gotxt">GO!</div>
-  <div class="lg">${logoSVG(th.accent,th.accentText)}</div><h3>${title}</h3><div class="lsub">${sub}</div>
-  ${m==='forgot'?`<div class="card" style="margin-top:20px;max-width:340px;position:relative;z-index:2"><div class="small">Die PIN liegt nur auf diesem Gerät und kann nicht wiederhergestellt werden. Du kannst VELOX auf diesem Gerät zurücksetzen – ist der Sync eingerichtet, holst du deine Daten danach mit Token, Passwort und Gist-ID zurück.</div><div class="btnrow"><button class="btn" data-l="back">Zurück</button><button class="btn danger" data-l="reset">Zurücksetzen</button></div></div>`:
+  const upd=lat&&cmpVer(lat,VERSION)>0;
+  el.innerHTML=`<div class="door l"></div><div class="door r"></div>
+  <div class="tape" id="tape"><div class="th l"></div><div class="th r"></div><div class="tag">ZIEL</div></div>
+  <div class="ver ${upd?'up':''}">VELOX v${VERSION}${upd?' · Update v'+lat:''}</div>
+  <div class="lc"><div class="lg">${logoSVG(th.accent,th.accentText)}</div><h3>${title}</h3><div class="lsub">${sub}</div>
+  ${m==='forgot'?`<div class="card" style="margin-top:20px;max-width:340px"><div class="small">Die PIN liegt nur auf diesem Gerät und kann nicht wiederhergestellt werden. Du kannst VELOX auf diesem Gerät zurücksetzen – ist der Sync eingerichtet, holst du deine Daten danach mit Token, Passwort und Gist-ID zurück.</div><div class="btnrow"><button class="btn" data-l="back">Zurück</button><button class="btn danger" data-l="reset">Zurücksetzen</button></div></div>`:
   `<div class="lights" id="lights">${[0,1,2,3].map(i=>`<i class="${i<LK.entry.length?'on':''}"></i>`).join('')}</div>
-  <div class="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="ghost" data-l="${m==='unlock'?'forgot':'cancel'}">${m==='unlock'?'':'Abbr.'}</button><button data-k="0">0</button><button class="ghost" data-l="del">⌫</button></div>
-  ${m==='unlock'?`<button class="forgot" data-l="forgot">PIN vergessen?</button>`:''}${m==='create'&&!S.settings.onboarded&&!pinData()?`<button class="forgot" data-l="skip">Ohne PIN fortfahren</button>`:''}`}`;
+  <div class="keys" id="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="ghost" data-l="${m==='unlock'?'forgot':'cancel'}">${m==='unlock'?'':'Abbr.'}</button><button data-k="0">0</button><button class="ghost" data-l="del">⌫</button></div>
+  ${m==='unlock'?`<button class="forgot" data-l="forgot">PIN vergessen?</button>`:''}${m==='create'&&!S.settings.onboarded&&!pinData()?`<button class="forgot" data-l="skip">Ohne PIN fortfahren</button>`:''}`}</div>
+  <div class="runner">🏃</div><div class="blogo">${logoSVG(th.accent,th.accentText)}</div><div class="flash"></div>`;
   $$('[data-k]',el).forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
-  $$('[data-l]',el).forEach(b=>b.onclick=()=>pinAct(b.dataset.l,b))}
+  $$('[data-l]',el).forEach(b=>b.onclick=()=>pinAct(b.dataset.l,b));
+  requestAnimationFrame(placeTape)}
+function placeTape(){const t=$('#tape'),l=$('#lights'),k=$('#keys');if(!t)return;let y;if(l&&k){const a=l.getBoundingClientRect().bottom,b=k.getBoundingClientRect().top;y=(a+b)/2}else y=innerHeight*.5;t.style.top=(y-15)+'px';const bl=$('#lock .blogo');if(bl)bl.style.top=y+'px';const rn=$('#lock .runner');if(rn)rn.style.top=(y-78)+'px'}
+addEventListener('resize',()=>{if($('#lock'))placeTape()});
 function pinAct(a,b){if(a==='del'){LK.entry=LK.entry.slice(0,-1);updLights();return}
   if(a==='forgot'){LK.mode='forgot';renderLock();return}if(a==='back'){LK.mode='unlock';renderLock();return}
   if(a==='reset'){if(confirmInline(b,'Wirklich?')){localStorage.removeItem(KEY);localStorage.removeItem(PINKEY);location.reload()}return}
@@ -1559,11 +1598,42 @@ async function pinCheck(){const m=LK.mode,e=LK.entry;
   if(m==='disable'){localStorage.setItem(PINKEY,JSON.stringify({off:true}));toast('PIN-Sperre deaktiviert');return unlockDone(false)}
   unlockDone(true)}
 function pinFail(then,msg){const l=$('#lights');l.classList.add('shake');$$('#lights i').forEach(i=>i.className='on');toast(ic('warn')+' '+msg);setTimeout(()=>{LK.entry='';l.classList.remove('shake');updLights();then&&then()},520)}
-function unlockDone(anim){const el=$('#lock');const fin=()=>{el.remove();LK=null;render();if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,300);if(syncReady()&&S.settings.sync.auto)syncNow(true)};
+function unlockDone(anim){const el=$('#lock');const fin=()=>{el.remove();LK=null;render();if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,300);if(syncReady()&&S.settings.sync.auto)syncNow(true);checkUpdate(false)};
   if(!anim||!S.settings.anim){fin();return}
-  updLights('g');setTimeout(()=>el.classList.add('go'),180);setTimeout(()=>el.classList.add('out'),950);setTimeout(fin,1550)}
+  render();updLights('g');setTimeout(()=>el.classList.add('run'),120);
+  setTimeout(()=>{el.classList.add('burst');const t=$('#tape').getBoundingClientRect();confetti({x:innerWidth/2,y:t.top+15,p:22,n:170,z:101})},540);
+  setTimeout(fin,1800)}
 document.addEventListener('keydown',e=>{if(!LK||!$('#lock'))return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinAct('del')});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')hiddenAt=Date.now();else if(pinOn()&&!LK&&hiddenAt&&Date.now()-hiddenAt>120000){closeSheet();showLock('unlock')}});
+
+/* =====================================================================
+   UPDATES
+   ===================================================================== */
+const cmpVer=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d}return 0};
+const latestVer=()=>localStorage.getItem('velox.latest');
+const updAvail=()=>{const l=latestVer();return l&&cmpVer(l,VERSION)>0?l:null};
+async function checkUpdate(manual){
+  if(location.protocol==='file:'){if(manual)toast('Update-Prüfung nur über deine GitHub-Adresse möglich');return}
+  if(!manual&&Date.now()-(+localStorage.getItem('velox.lastCheck')||0)<3*3600e3)return;
+  try{const base=location.pathname.replace(/[^/]*$/,'');const r=await fetch(base+'index.html?check='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;
+    const m=(await r.text()).match(/VERSION='([\d.]+)'/);if(!m)throw 0;localStorage.setItem('velox.latest',m[1]);localStorage.setItem('velox.lastCheck',Date.now());
+    if(cmpVer(m[1],VERSION)>0){if(manual)openUpdate();else if(TAB==='home'&&!$('#ov').classList.contains('on'))render()}
+    else if(manual){toast(ic('check')+' Du hast die neueste Version (v'+VERSION+')');if(TAB==='set')render()}}
+  catch(e){if(manual)toast(ic('warn')+' Update-Prüfung fehlgeschlagen – Internet?')}}
+function openUpdate(){const l=updAvail();openSheet(`${sheetHead('Update')}<div style="text-align:center;margin:16px 0"><div style="font-size:54px">🚀</div><div class="mid">Neue Version verfügbar</div><div class="small muted" style="margin-top:4px">Installiert: v${VERSION} → Neu: <b style="color:var(--accent)">v${l}</b></div></div>
+  <div class="card small">Deine Daten bleiben beim Aktualisieren vollständig erhalten – sie liegen auf dem Gerät und (falls eingerichtet) verschlüsselt in der Cloud.</div>
+  <button class="btn acc full" style="margin-top:14px;padding:15px" data-act="doUpdate">${ic('download')} Jetzt aktualisieren</button>`)}
+function doUpdate(){const l=updAvail()||'';try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}const base=location.pathname.replace(/index\.html$/,'');location.replace(base+'?v='+l+'&t='+Date.now())}
+
+/* =====================================================================
+   WISCHEN ZUM SCHLIESSEN (wie iOS)
+   ===================================================================== */
+(function(){const sh=$('#sheet'),ov=$('#ov');let y0=null,dy=0,t0=0,drag=false;
+  sh.addEventListener('touchstart',e=>{if(LOCK||e.touches.length>1)return;const tg=e.target;if(tg.closest('input[type=range],textarea,select'))return;if(sh.scrollTop>2&&!tg.closest('.grab'))return;y0=e.touches[0].clientY;t0=Date.now();dy=0;drag=false},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(!drag&&(dy<6||sh.scrollTop>2)){if(dy<0)y0=null;return}drag=true;e.preventDefault();sh.style.transition='none';sh.style.transform=`translateY(${Math.max(0,dy)}px)`;ov.style.backgroundColor=`rgba(0,0,0,${Math.max(.15,.6-dy/700)})`},{passive:false});
+  sh.addEventListener('touchend',()=>{if(y0==null)return;const v=dy/Math.max(1,Date.now()-t0);y0=null;if(!drag)return;drag=false;
+    if(dy>110||v>.65){sh.style.transition='transform .22s ease-in';sh.style.transform='translateY(110%)';setTimeout(()=>{closeSheet();sh.style.transform='';sh.style.transition='';ov.style.backgroundColor=''},210)}
+    else{sh.style.transition='transform .3s cubic-bezier(.2,.8,.2,1)';sh.style.transform='';ov.style.backgroundColor='';setTimeout(()=>sh.style.transition='',300)}})})();
 
 /* =====================================================================
    AUSFÜLLHILFEN
@@ -1657,6 +1727,9 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'checkUpdate':checkUpdate(true);break;
+    case'doUpdate':doUpdate();break;
+    case'openUpdate':openUpdate();break;
     case'editGear':openGear(k);break;
     case'showLastAna':{const s=S.sessions.filter(x=>x.date===ymd(today())&&x.sport!=='walk').pop();if(s)showAnalysis(s,formNow(),null);break}
     case'saveGear':{const n=$('#gName').value.trim();if(!n){toast('Name fehlt');return}const g=k?S.gear.find(x=>x.id===k):{id:uid()};Object.assign(g,{name:n,type:GF.type,startKm:num($('#gStart').value)||0,limit:num($('#gLim').value)||0,def:GF.def});if(g.def)S.gear.forEach(x=>{if(x!==g&&x.type===g.type)x.def=false});if(!k)S.gear.push(g);save();closeSheet();render();toast(ic('check')+' Gespeichert');break}
@@ -1780,6 +1853,7 @@ function openSyncInfo(){const y=S.settings.sync,st=syncReady()?syncState:'off';
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!LK&&syncReady()&&S.settings.sync.auto)syncNow(true)});
 
 render();
+setTimeout(()=>checkUpdate(false),2500);
 {const p=pinData();if(p&&p.hash)showLock('unlock');else if(!p)showLock('create');else{if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,400);if(syncReady()&&S.settings.sync.auto)syncNow(true)}}
 render.g=greeting().t+moodEmoji();setInterval(()=>{if(TAB==='home'&&!$('#ov').classList.contains('on')){_cache={};const g=greeting().t+moodEmoji();if(render.g!==g){render.g=g;render()}}},60000);
 </script>
