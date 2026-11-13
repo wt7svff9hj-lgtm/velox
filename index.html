@@ -258,33 +258,34 @@ input[type=date].inp::-webkit-date-and-time-value,input[type=time].inp::-webkit-
 .field>label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hint{margin-top:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,var(--card));border-left:3px solid var(--accent);font-size:12.5px;line-height:1.45;color:var(--text);animation:fadeUp .25s var(--ease) both}
 .hint b{color:var(--accent)}
-/* Lock – Startschuss */
-.lock{position:fixed;inset:0;z-index:100;overflow:hidden;color:var(--text);touch-action:none;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 16%,var(--bg)),var(--bg) 62%)}
-.lock .trk{position:absolute;left:-10%;right:-10%;bottom:0;height:47%;pointer-events:none;transform-origin:50% 0;transition:transform 1.1s cubic-bezier(.5,0,.2,1),opacity .6s}
-.lock .trk svg{width:100%;height:100%}
-.lock .trk .dash{stroke-dasharray:10 16;animation:lane 1.4s linear infinite}
-.lock.go .trk .dash{animation-duration:.1s}
-.lock.go .trk{transform:scale(2.4) translateY(-6%)}
-@keyframes lane{to{stroke-dashoffset:-52}}
-.lock canvas.warp{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-.lock .lc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(30px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom));transition:transform .55s cubic-bezier(.6,0,.9,.4),opacity .45s,filter .45s}
+/* Lock – ruhig, Animation erst nach PIN */
+.lock{position:fixed;inset:0;z-index:100;overflow:hidden;color:var(--text);touch-action:none;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 14%,var(--bg)),var(--bg) 62%)}
+.lock .lc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(36px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom));transition:opacity .25s,transform .3s}
 .lock .ver{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:3;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);background:color-mix(in srgb,var(--card) 70%,transparent);padding:4px 9px;border-radius:99px}
 .lock .ver.up{color:var(--accentText);background:var(--accent)}
-.lock .lg svg{width:64px;height:64px;border-radius:18px;box-shadow:0 10px 36px color-mix(in srgb,var(--accent) 45%,transparent)}
+.lock .lg svg{width:64px;height:64px;border-radius:18px;box-shadow:0 10px 36px color-mix(in srgb,var(--accent) 40%,transparent)}
 .lock h3{margin:14px 0 2px;font-size:24px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em}
-.gotxt{position:absolute;top:50%;left:50%;z-index:4;transform:translate(-50%,-50%) scale(3);font-size:120px;font-weight:900;font-style:italic;color:var(--accent);opacity:0;pointer-events:none;letter-spacing:-.05em;text-shadow:0 0 30px color-mix(in srgb,var(--accent) 80%,transparent),0 0 90px color-mix(in srgb,var(--accent) 50%,transparent);-webkit-text-stroke:2px color-mix(in srgb,#fff 40%,transparent)}
-.lock.go .gotxt{animation:goslam 1.15s cubic-bezier(.2,.9,.2,1) forwards}
-@keyframes goslam{0%{opacity:0;transform:translate(-50%,-50%) scale(3.2)}14%{opacity:1;transform:translate(-50%,-50%) scale(.92)}22%{transform:translate(-50%,-50%) scale(1.06)}30%{transform:translate(-50%,-50%) scale(1)}62%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}100%{opacity:0;transform:translate(-50%,-50%) scale(7)}}
-.lock .flash{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(circle at 50% 50%,#fff,color-mix(in srgb,var(--accent) 60%,transparent) 40%,transparent 70%);opacity:0}
-.lock.go .flash{animation:flash2 .5s ease-out}
-@keyframes flash2{0%{opacity:.9}100%{opacity:0}}
-.lock.go{animation:lshake .45s .05s}
-@keyframes lshake{15%{transform:translate(-8px,4px)}30%{transform:translate(7px,-5px)}45%{transform:translate(-5px,3px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
-.lock.go .lc{transform:scale(1.04)}
-.lock.zoom .lc{transform:scale(2.6);opacity:0;filter:blur(10px)}
-.lock.zoom{transition:opacity .5s .25s;opacity:0}
-#app.settle{animation:settle .7s cubic-bezier(.2,.8,.2,1)}
-@keyframes settle{from{transform:scale(1.08);opacity:.3;filter:blur(6px)}}
+.keys .bio{font-size:30px!important;color:var(--accent)}
+.lock.run{background:transparent}
+.lock.run .lc{opacity:0;transform:scale(.94)}
+.lock.run .ver{opacity:0}
+.stage{position:absolute;inset:0;z-index:4;pointer-events:none}
+.stage .sl{position:absolute;left:0;right:0;background:radial-gradient(120% 60% at 50% 100%,color-mix(in srgb,var(--accent) 10%,#05060a),#05060a 70%);background-size:100vw 100vh;will-change:transform}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+.stage .trail{position:absolute;left:0;height:5px;width:0;border-radius:3px;z-index:3;transform:translateY(-50%)}
+.stage .ath{position:absolute;left:0;top:0;z-index:4;width:118px;height:118px;margin:-59px 0 0 -59px;will-change:transform}
+.stage .ath svg{width:100%;height:100%;fill:#fff}
+.stage .road{position:absolute;left:0;right:0;height:1px;z-index:1;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--text) 18%,transparent),transparent)}
+.stage .ttl{position:absolute;left:12px;right:12px;top:16%;text-align:center;z-index:5;font-weight:900;font-style:italic;font-size:clamp(24px,7.5vw,40px);letter-spacing:-.03em;text-transform:uppercase;color:#fff;opacity:0}
+.stage.cut .trail{animation:cutflash .35s ease-out forwards}
+@keyframes cutflash{0%{height:5px}40%{height:14px;background:#fff!important;box-shadow:0 0 40px #fff}100%{height:2px;opacity:0}}
+.stage.open .s1{transition:transform .7s cubic-bezier(.6,0,.2,1);transform:translateY(-102%)}
+.stage.open .s2{transition:transform .7s .05s cubic-bezier(.6,0,.2,1);transform:translateX(105%) skewX(-12deg)}
+.stage.open .s3{transition:transform .7s cubic-bezier(.6,0,.2,1);transform:translateY(102%)}
+.stage.open canvas{transition:opacity .4s;opacity:0}
+.stage.open .ttl{transition:opacity .3s;opacity:0!important}
+#app.settle{animation:settle .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes settle{from{transform:scale(1.06);opacity:.2;filter:blur(8px)}}
 .lights{display:flex;gap:14px;margin:22px 0 8px;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,#000 45%,var(--card));box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
 .lights i{width:22px;height:22px;border-radius:50%;background:#2a2e36;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);transition:background .15s,box-shadow .15s}
 .lights i.on{background:#ff3b3b;box-shadow:0 0 16px #ff3b3b,inset 0 -2px 4px rgba(0,0,0,.3)}
@@ -362,7 +363,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='5.4';
+const KEY='velox.v1',VERSION='6.0';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -988,6 +989,7 @@ function todos(){const st=S.settings,t=ymd(today()),h=new Date().getHours(),out=
   {const td=today(),pm=new Date(td.getFullYear(),td.getMonth()-1,1),key='wm'+pm.getFullYear()+'-'+pm.getMonth();if(td.getDate()<=7&&!S.seen[key]&&periodSessions(pm,new Date(td.getFullYear(),td.getMonth(),1)).length>=3)out.unshift({i:'sparkle',t:`Dein ${MONTHS[pm.getMonth()]}-Rückblick ist da 🎬`,d:'Deine Highlights im Story-Format – antippen und durchklicken.',a:'wrapLastMonth'});
    const yk='wy'+(td.getMonth()===11?td.getFullYear():td.getFullYear()-1);if(((td.getMonth()===11&&td.getDate()>=15)||(td.getMonth()===0&&td.getDate()<=10))&&!S.seen[yk]&&S.sessions.length>=10)out.unshift({i:'trophy',t:`Dein Sportjahr ${yk.slice(2)} 🎉`,d:'Der große Jahresrückblick – alle Highlights.',a:'wrapYear'})}
   if(L.daysDiffer)out.push({i:'brain',t:'Trainingstage anpassen?',d:`Du trainierst meist ${L.days.map(d=>WD[d]).join(', ')} – soll der Plan das übernehmen?`,a:'applyDays'});
+  if(pinOn()&&!bioOn()&&!S.seen.bioAsk&&location.protocol!=='file:')out.push({i:'user',t:'Face ID aktivieren?',d:'Entsperren per Blick statt PIN – antippen zum Einrichten.',a:'bioAsk'});
   if(updAvail())out.unshift({i:'download',t:`Update verfügbar: v${updAvail()} 🚀`,d:'Neue Funktionen & Verbesserungen – deine Daten bleiben erhalten.',a:'openUpdate'});
   return out}
 function vHome(){
@@ -1189,7 +1191,8 @@ function vSet(){
     <div class="btnrow">${updAvail()?`<button class="btn acc" data-act="doUpdate">${ic('download')} Jetzt aktualisieren</button>`:`<button class="btn" data-act="checkUpdate">${ic('sync')} Nach Updates suchen</button>`}</div></div>
   <h2>🔢 App-Schutz<span class="line"></span></h2>
   <div class="card"><div class="row between"><div><b>PIN-Sperre</b><div class="tiny muted">${pinOn()?'Aktiv – beim Öffnen und nach 2 Min. im Hintergrund':'Aus – jeder mit deinem Handy kann die App öffnen'}</div></div><span class="badge ${pinOn()?'good':''}">${pinOn()?'An':'Aus'}</span></div>
-    <div class="btnrow">${pinOn()?`<button class="btn" data-act="pinChange">PIN ändern</button><button class="btn ghost" data-act="pinOff">Deaktivieren</button>`:`<button class="btn acc" data-act="pinChange">PIN festlegen</button>`}</div></div>
+    <div class="btnrow">${pinOn()?`<button class="btn" data-act="pinChange">PIN ändern</button><button class="btn ghost" data-act="pinOff">Deaktivieren</button>`:`<button class="btn acc" data-act="pinChange">PIN festlegen</button>`}</div>
+    <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--card2)"><div class="row" style="gap:10px"><span style="font-size:26px;color:var(--accent)">${FACEID}</span><div><b>Face ID</b><div class="tiny muted">${bioOn()?'Entsperren per Gesicht – PIN bleibt als Ersatz':pinOn()?'Schneller entsperren statt PIN-Eingabe':'Erst PIN festlegen'}</div></div></div><button class="sw ${bioOn()?'on':''}" data-act="bioToggle"></button></div></div>
   <h2>${ic('sync')} Sync & Verschlüsselung<span class="line"></span></h2>
   <div class="card"><div class="row" style="gap:12px">${syncBadge(true)}<div class="grow"><b>${{ok:'Synchronisiert & verschlüsselt',busy:'Synchronisiert gerade …',err:'Sync-Fehler',off:'Nur auf diesem Gerät'}[syncState]}</b><div class="tiny muted">${syncReady()?'AES-256 Ende-zu-Ende · '+(st.sync.last?'zuletzt '+new Date(st.sync.last).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'noch nie'):'Daten zwischen iPhone & iPad abgleichen'}</div></div></div>
     <div class="small muted" style="margin-top:10px">Deine Daten werden <b>auf dem Gerät verschlüsselt</b> und erst dann in einem geheimen (nicht öffentlich gelisteten) GitHub-Gist gespeichert. Ohne dein Sync-Passwort kann sie niemand lesen – auch GitHub nicht.</div>
@@ -1549,7 +1552,20 @@ function openWrap(type,y,m){const a=type==='month'?new Date(y,m,1):new Date(y,0,
 /* =====================================================================
    PIN-SPERRE mit Startampel
    ===================================================================== */
-const PINKEY='velox.pin';let LK=null,hiddenAt=0;
+const PINKEY='velox.pin',BIOKEY='velox.bio';let LK=null,hiddenAt=0;
+const FACEID='<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16M8.5 9v1.2M15.5 9v1.2M12 9v4.2h-1M9 16.2c1.8 1.4 4.2 1.4 6 0"/></svg>';
+const bioOn=()=>{try{return!!JSON.parse(localStorage.getItem(BIOKEY))?.id}catch(e){return false}};
+const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const ub64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+async function bioAvailable(){try{return!!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
+async function bioRegister(){if(!pinOn()){toast('Bitte zuerst eine PIN festlegen');return}if(!(await bioAvailable())){toast(ic('warn')+' Face ID ist hier nicht verfügbar (nur über die GitHub-Adresse in Safari)',3500);return}
+  try{const cred=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'VELOX',id:location.hostname},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:(S.settings.name||'VELOX')+' · VELOX',displayName:S.settings.name||'VELOX'},
+    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
+    localStorage.setItem(BIOKEY,JSON.stringify({id:b64u(cred.rawId)}));toast('🙂 Face ID aktiviert');render()}
+  catch(e){toast(ic('warn')+' Face ID konnte nicht eingerichtet werden'+(e.name==='NotAllowedError'?' (abgebrochen)':''),3500)}}
+async function bioUnlock(){if(!LK||LK.mode!=='unlock'||!bioOn())return;const id=JSON.parse(localStorage.getItem(BIOKEY)).id;
+  try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:ub64(id)}],userVerification:'required',timeout:60000,rpId:location.hostname}});if(LK)unlockDone(true)}
+  catch(e){/* abgebrochen oder Geste nötig → Button antippen */}}
 const pinData=()=>{try{return JSON.parse(localStorage.getItem(PINKEY))}catch(e){return null}};
 const pinOn=()=>{const p=pinData();return!!(p&&p.hash)};
 async function hashPin(pin,salt){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin+':velox'));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of salt+pin)h=((h*33)^c.charCodeAt(0))>>>0;return'f'+h}}
@@ -1558,21 +1574,19 @@ function renderLock(){const el=$('#lock'),m=LK.mode,th=S.settings.theme,lat=loca
   const title={unlock:'Startbereit?',create:'PIN festlegen',confirm:'PIN wiederholen',disable:'PIN bestätigen',forgot:'PIN vergessen?'}[m];
   const sub={unlock:`${S.settings.name?esc(S.settings.name)+', g':'G'}ib deine PIN ein – dann geht's los.`,create:'Wähle 4 Ziffern. Sie schützen VELOX auf diesem Gerät.',confirm:'Zur Sicherheit noch einmal.',disable:'Aktuelle PIN eingeben, um die Sperre abzuschalten.',forgot:''}[m];
   const upd=lat&&cmpVer(lat,VERSION)>0;
-  const lanes=[-260,-150,-50,50,150,260];
-  el.innerHTML=`<div class="trk"><svg viewBox="0 0 400 300" preserveAspectRatio="none"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${th.accent}" stop-opacity="0"/><stop offset="1" stop-color="${th.accent}" stop-opacity=".24"/></linearGradient></defs><path d="M170 0 L230 0 L460 300 L-60 300Z" fill="url(#tg)"/>${lanes.map(x=>`<line x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="${th.accent}" stroke-opacity=".38" stroke-width="1.4"/>`).join('')}${[-100,0,100,205].map(x=>`<line class="dash" x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="#fff" stroke-opacity=".5" stroke-width="2.4"/>`).join('')}</svg></div>
-  <canvas class="warp" id="warp"></canvas>
-  <div class="ver ${upd?'up':''}">VELOX v${VERSION}${upd?' · Update v'+lat:''}</div>
+  const bio=m==='unlock'&&bioOn();
+  el.innerHTML=`<div class="ver ${upd?'up':''}">VELOX v${VERSION}${upd?' · Update v'+lat:''}</div>
   <div class="lc"><div class="lg">${logoSVG(th.accent,th.accentText)}</div><h3>${title}</h3><div class="lsub">${sub}</div>
   ${m==='forgot'?`<div class="card" style="margin-top:20px;max-width:340px"><div class="small">Die PIN liegt nur auf diesem Gerät und kann nicht wiederhergestellt werden. Du kannst VELOX auf diesem Gerät zurücksetzen – ist der Sync eingerichtet, holst du deine Daten danach mit Token, Passwort und Gist-ID zurück.</div><div class="btnrow"><button class="btn" data-l="back">Zurück</button><button class="btn danger" data-l="reset">Zurücksetzen</button></div></div>`:
   `<div class="lights" id="lights">${[0,1,2,3].map(i=>`<i class="${i<LK.entry.length?'on':''}"></i>`).join('')}</div>
-  <div class="keys" id="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="ghost" data-l="${m==='unlock'?'forgot':'cancel'}">${m==='unlock'?'':'Abbr.'}</button><button data-k="0">0</button><button class="ghost" data-l="del">⌫</button></div>
-  ${m==='unlock'?`<button class="forgot" data-l="forgot">PIN vergessen?</button>`:''}${m==='create'&&!S.settings.onboarded&&!pinData()?`<button class="forgot" data-l="skip">Ohne PIN fortfahren</button>`:''}`}</div>
-  <div class="gotxt">GO!</div><div class="flash"></div>`;
+  <div class="keys" id="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}${bio?`<button class="ghost bio" data-l="bio" aria-label="Face ID">${FACEID}</button>`:`<button class="ghost" data-l="${m==='unlock'?'forgot':'cancel'}">${m==='unlock'?'':'Abbr.'}</button>`}<button data-k="0">0</button><button class="ghost" data-l="del">⌫</button></div>
+  ${m==='unlock'?`<button class="forgot" data-l="forgot">PIN vergessen?</button>`:''}${m==='create'&&!S.settings.onboarded&&!pinData()?`<button class="forgot" data-l="skip">Ohne PIN fortfahren</button>`:''}`}</div>`;
   $$('[data-k]',el).forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
   $$('[data-l]',el).forEach(b=>b.onclick=()=>pinAct(b.dataset.l,b));
-}
+  if(m==='unlock'&&bioOn()&&!LK.bioTried){LK.bioTried=true;setTimeout(bioUnlock,350)}}
 
 function pinAct(a,b){if(a==='del'){LK.entry=LK.entry.slice(0,-1);updLights();return}
+  if(a==='bio'){bioUnlock();return}
   if(a==='forgot'){LK.mode='forgot';renderLock();return}if(a==='back'){LK.mode='unlock';renderLock();return}
   if(a==='reset'){if(confirmInline(b,'Wirklich?')){localStorage.removeItem(KEY);localStorage.removeItem(PINKEY);location.reload()}return}
   if(a==='cancel'){if(pinOn()||LK.mode==='disable'||S.settings.onboarded){unlockDone(false)}return}
@@ -1584,26 +1598,49 @@ async function pinCheck(){const m=LK.mode,e=LK.entry;
   if(m==='confirm'){if(e===LK.first){const salt=Math.random().toString(36).slice(2,10);localStorage.setItem(PINKEY,JSON.stringify({salt,hash:await hashPin(e,salt)}));toast('🔢 PIN gespeichert');return unlockDone(true)}return pinFail(()=>{LK.mode='create';LK.first='';renderLock()},'PINs stimmen nicht überein')}
   const p=pinData();const ok=p&&p.hash===await hashPin(e,p.salt);
   if(!ok)return pinFail(null,'Falsche PIN');
-  if(m==='disable'){localStorage.setItem(PINKEY,JSON.stringify({off:true}));toast('PIN-Sperre deaktiviert');return unlockDone(false)}
+  if(m==='disable'){localStorage.setItem(PINKEY,JSON.stringify({off:true}));localStorage.removeItem(BIOKEY);toast('PIN-Sperre deaktiviert');return unlockDone(false)}
   unlockDone(true)}
 function pinFail(then,msg){const l=$('#lights');l.classList.add('shake');$$('#lights i').forEach(i=>i.className='on');toast(ic('warn')+' '+msg);setTimeout(()=>{LK.entry='';l.classList.remove('shake');updLights();then&&then()},520)}
 function unlockDone(anim){const el=$('#lock');const fin=()=>{el.remove();LK=null;if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,300);if(syncReady()&&S.settings.sync.auto)syncNow(true);autoUpdate()};
   if(!anim||!S.settings.anim){render();fin();return}
-  render();const L=$$('#lights i');L.forEach(i=>i.className='');
-  L.forEach((i,n)=>setTimeout(()=>{i.className='on'},90+n*110));
-  setTimeout(()=>L.forEach(i=>i.className='g'),90+4*110+120);
-  const t0=90+4*110+170;
-  setTimeout(()=>{el.classList.add('go');warp(el)},t0);
-  setTimeout(()=>el.classList.add('zoom'),t0+700);
-  setTimeout(()=>{const a=$('#app');a.classList.remove('settle');void a.offsetWidth;a.classList.add('settle')},t0+800);
-  setTimeout(fin,t0+1350)}
-function warp(el){const c=$('#warp',el);if(!c)return;const dpr=devicePixelRatio||1,W=innerWidth,H=innerHeight;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
-  const cx=W/2,cy=H*.53,acc=S.settings.theme.accent,ps=Array.from({length:220},()=>{const a=Math.random()*Math.PI*2,d=Math.random()*40;return{a,d,v:1.5+Math.random()*3,w:Math.random()*2+.6,c:Math.random()<.65?acc:'#ffffff'}});
-  const t0=performance.now();(function f(t){const k=(t-t0)/1000;x.clearRect(0,0,W,H);x.lineCap='round';
-    ps.forEach(p=>{const d0=p.d;p.v*=1.075;p.d+=p.v;const ca=Math.cos(p.a),sa=Math.sin(p.a);x.strokeStyle=p.c;x.globalAlpha=Math.min(1,p.d/120)*Math.max(0,1-k*.9);x.lineWidth=p.w*(1+p.d/220);x.beginPath();x.moveTo(cx+ca*d0*.6,cy+sa*d0*.6);x.lineTo(cx+ca*p.d,cy+sa*p.d);x.stroke();if(p.d>Math.max(W,H)){p.d=Math.random()*20;p.v=2+Math.random()*3}});
-    if(k<1.3&&el.isConnected)requestAnimationFrame(f)})(t0)}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>autoUpdate(),800)});
-addEventListener('pageshow',e=>{if(e.persisted)autoUpdate(true)});
+  render();updLights('g');setTimeout(()=>sprintDuel(el,fin),180)}
+/* Sprint-Duell: Radfahrer vs. Läufer reißen den Sperrbildschirm auf */
+function sprintDuel(el,fin){
+  const W=innerWidth,H=innerHeight,th=S.settings.theme,cRun=th.accent,cBike=sc('ride'),y1=Math.round(H*.42),y2=Math.round(H*.62);
+  const st=document.createElement('div');st.className='stage';
+  const bg=top=>`background-position:0 -${top}px`;
+  st.innerHTML=`<div class="sl s1" style="top:0;height:${y1}px;${bg(0)}"></div><div class="sl s2" style="top:${y1}px;height:${y2-y1}px;${bg(y1)}"></div><div class="sl s3" style="top:${y2}px;bottom:0;${bg(y2)}"></div>
+    <div class="road" style="top:${y1+46}px"></div><div class="road" style="top:${y2+46}px"></div><canvas></canvas>
+    <div class="trail" id="tb" style="top:${y1+18}px;background:linear-gradient(90deg,transparent,${cBike});box-shadow:0 0 18px ${cBike}"></div>
+    <div class="trail" id="tr" style="top:${y2+20}px;background:linear-gradient(90deg,transparent,${cRun});box-shadow:0 0 18px ${cRun}"></div>
+    <div class="ath" id="ab" style="filter:drop-shadow(0 0 10px ${cBike}) drop-shadow(0 0 26px ${cBike})">${ic('ride')}</div>
+    <div class="ath" id="ar" style="filter:drop-shadow(0 0 10px ${cRun}) drop-shadow(0 0 26px ${cRun})">${ic('run')}</div>
+    <div class="ttl" id="ttl">Los geht's${S.settings.name?', '+esc(S.settings.name):''}!</div>`;
+  el.appendChild(st);el.classList.add('run');
+  const cv=st.querySelector('canvas'),dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  const ab=$('#ab',st),ar=$('#ar',st),tb=$('#tb',st),tr=$('#tr',st),ttl=$('#ttl',st);
+  const streaks=Array.from({length:46},()=>({x:Math.random()*W,y:Math.random()*H,l:30+Math.random()*120,v:14+Math.random()*26,a:.15+Math.random()*.35}));
+  const sparks=[];const ease=t=>t<0?0:t>1?1:1-Math.pow(1-t,2.2);
+  const D=1250,t0=performance.now();let done=false;
+  (function f(t){const k=t-t0;x.clearRect(0,0,W,H);
+    // Speed-Streaks
+    x.lineCap='round';streaks.forEach(s=>{s.x-=s.v*(k<D?1:.4);if(s.x<-s.l){s.x=W+Math.random()*80;s.y=Math.random()*H}x.strokeStyle=`rgba(255,255,255,${s.a})`;x.lineWidth=1.4;x.beginPath();x.moveTo(s.x,s.y);x.lineTo(s.x+s.l,s.y);x.stroke()});
+    // Positionen: Läufer startet vorne, Radfahrer überholt
+    const pr=-90+(W+200)*ease((k-60)/(D-80)),pb=-160+(W+280)*ease((k-180)/(D-260));
+    const bob=Math.abs(Math.sin(k/55))*12;
+    ar.style.transform=`translate(${pr}px,${y2-bob}px) rotate(${-4+Math.sin(k/55)*4}deg)`;
+    ab.style.transform=`translate(${pb}px,${y1}px) rotate(${Math.sin(k/90)*2-3}deg)`;
+    tr.style.width=Math.max(0,pr-20)+'px';tb.style.width=Math.max(0,pb-20)+'px';
+    // Funken hinter dem Rad
+    if(k<D&&pb>-40&&pb<W+40)for(let i=0;i<3;i++)sparks.push({x:pb-34,y:y1+40,vx:-3-Math.random()*6,vy:-Math.random()*3,l:1,c:Math.random()<.5?cBike:'#fff'});
+    if(k<D&&pr>-40&&pr<W+40&&Math.random()<.5)sparks.push({x:pr-20,y:y2+44,vx:-2-Math.random()*3,vy:-Math.random()*2,l:1,c:cRun});
+    sparks.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.25;p.l-=.035;if(p.l>0){x.globalAlpha=p.l;x.fillStyle=p.c;x.fillRect(p.x,p.y,3,3)}});x.globalAlpha=1;
+    for(let i=sparks.length-1;i>=0;i--)if(sparks[i].l<=0)sparks.splice(i,1);
+    ttl.style.opacity=k>350&&k<D+150?Math.min(1,(k-350)/200):0;ttl.style.transform=`scale(${1+Math.max(0,k-350)/4000})`;
+    if(k>=D+60&&!done){done=true;st.classList.add('cut');if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){}
+      setTimeout(()=>{st.classList.add('open');const a=$('#app');a.classList.remove('settle');void a.offsetWidth;a.classList.add('settle')},180);
+      setTimeout(fin,950)}
+    if(el.isConnected&&k<D+1000)requestAnimationFrame(f)})(t0)}
 document.addEventListener('keydown',e=>{if(!LK||!$('#lock'))return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinAct('del')});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')hiddenAt=Date.now();else if(pinOn()&&!LK&&hiddenAt&&Date.now()-hiddenAt>120000){closeSheet();showLock('unlock')}});
 
@@ -1741,6 +1778,8 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'bioAsk':S.seen.bioAsk=1;save(true);bioRegister();break;
+    case'bioToggle':if(bioOn()){localStorage.removeItem(BIOKEY);toast('Face ID deaktiviert');render()}else bioRegister();break;
     case'checkUpdate':checkUpdate(true);break;
     case'doUpdate':sessionStorage.removeItem('velox.tried');doUpdate();break;
     case'openUpdate':openUpdate();break;
