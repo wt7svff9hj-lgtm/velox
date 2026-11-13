@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VELOX · Kalender</title><meta name="theme-color" content="#08090c">
+<style>
+body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#08090c;color:#f3f5f7;padding:24px 18px calc(30px + env(safe-area-inset-bottom))}
+h1{font-style:italic;font-weight:900;letter-spacing:-.02em;margin:6px 0 4px;font-size:28px}
+.muted{color:#8a93a3;font-size:14px;line-height:1.45}
+.card{background:#14171c;border-radius:18px;padding:14px 16px;margin:16px 0}
+.ev{padding:8px 0;border-bottom:1px solid #222831;font-weight:700;font-size:15px}.ev:last-child{border:0}.ev span{display:block;font-weight:500;color:#8a93a3;font-size:13px;margin-top:2px}
+.btn{display:block;width:100%;box-sizing:border-box;border:0;border-radius:16px;padding:16px;font-size:17px;font-weight:800;margin-top:10px;background:#c6ff3d;color:#08090c;text-align:center;text-decoration:none;font-family:inherit}
+.btn.s{background:#1d2128;color:#f3f5f7}
+ol{padding-left:20px;margin:6px 0}li{margin:4px 0}
+</style></head><body>
+<div style="font-weight:900;font-style:italic;color:#c6ff3d;letter-spacing:.04em">VELOX</div>
+<h1>📅 In den Kalender</h1>
+<div class="muted" id="sub">Trainings werden geladen …</div>
+<div class="card" id="list"></div>
+<a class="btn" id="b1">Zum Kalender hinzufügen</a>
+<button class="btn s" id="b2">Als Datei laden (.ics)</button>
+<button class="btn s" id="b3" style="display:none">Teilen / In Dateien sichern</button>
+<div class="card muted"><b style="color:#f3f5f7">Passiert nichts?</b><ol>
+<li>Unten rechts auf das <b>Safari-Kompass-Symbol</b> tippen (öffnet diese Seite im echten Safari).</li>
+<li>Dort nochmal <b>„Zum Kalender hinzufügen“</b> tippen.</li>
+<li>Bei „Laden?“ auf <b>Laden</b>, dann auf <b>Alle hinzufügen</b>.</li></ol>
+Danach kannst du dieses Fenster schließen und zurück in VELOX.</div>
+<script>
+(function(){
+  let ics='';
+  try{const h=location.hash.slice(1);const b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));ics=decodeURIComponent(escape(b))}catch(e){}
+  const sub=document.getElementById('sub'),list=document.getElementById('list');
+  if(!ics||ics.indexOf('BEGIN:VCALENDAR')<0){sub.textContent='Keine Kalenderdaten gefunden. Bitte in VELOX erneut exportieren.';list.style.display='none';['b1','b2'].forEach(i=>document.getElementById(i).style.display='none');return}
+  const un=ics.replace(/\r?\n[ \t]/g,'');const evs=un.split('BEGIN:VEVENT').slice(1).map(v=>{const g=k=>{const m=v.match(new RegExp('^'+k+'[^:]*:(.*)$','m'));return m?m[1]:''};const d=g('DTSTART');return{t:g('SUMMARY').replace(/\\,/g,',').replace(/\\;/g,';'),d:d?new Date(+d.slice(0,4),+d.slice(4,6)-1,+d.slice(6,8)):null}});
+  sub.textContent=evs.length===1?'1 Training als ganztägiger Termin.':evs.length+' Trainings als ganztägige Termine.';
+  list.innerHTML=evs.map(e=>'<div class="ev">'+e.t.replace(/[<&]/g,'')+'<span>'+(e.d?e.d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'}):'')+'</span></div>').join('');
+  const name='velox-training.ics',data='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
+  const b1=document.getElementById('b1');b1.href=data;
+  document.getElementById('b2').onclick=()=>{const bl=new Blob([ics],{type:'text/calendar'}),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)};
+  try{const f=new File([ics],name,{type:'text/calendar'});if(navigator.canShare&&navigator.canShare({files:[f]})){const b3=document.getElementById('b3');b3.style.display='block';b3.onclick=()=>navigator.share({files:[f],title:'VELOX Training'}).catch(()=>{})}}catch(e){}
+})();
+</script></body></html>

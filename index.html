@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.7';
+const KEY='velox.v1',VERSION='6.8';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -1678,8 +1678,15 @@ function openIcs(pre){const st=$('#ov').classList.contains('on')?$('#sheet').scr
   <div class="card list">${its.map(p=>{const on=ICS.sel.has(p.date);return`<div class="item" data-act="icsTog" data-k="${p.date}">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ganztägig${S.calExp[p.date]?(S.calExp[p.date]===p.title?' · schon exportiert':' · <b style="color:var(--warn)">geändert</b>'):''}</div></div><span style="width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:900;${on?'background:var(--accent);color:var(--accentText)':'border:2px solid var(--muted)'}">${on?'✓':''}</span></div>`}).join('')||'<div class="empty">Keine Einheiten geplant</div>'}</div>
   <button class="btn acc full" style="margin-top:12px;padding:15px" data-act="icsGo" ${n?'':'disabled style="margin-top:12px;padding:15px;opacity:.5"'}>📅 ${n===1?'1 Training':n+' Trainings'} exportieren</button>
   <div class="tiny muted" style="margin-top:10px">Ändert sich der Plan, zeigt VELOX dir das hier und unter „Für dich“. iOS überschreibt importierte Termine nicht automatisch – alten Termin dann im Kalender löschen.</div>`)}
+let ICSPEND=null;
+function icsSafari(){if(!ICSPEND)return;const b=btoa(unescape(encodeURIComponent(ICSPEND.ics))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');const u=new URL('cal.html',location.href.split('#')[0].split('?')[0]).href+'#'+b;const w=window.open(u,'_blank');if(!w)location.href=u}
+function icsShare(){if(!ICSPEND)return;try{const f=new File([ICSPEND.ics],ICSPEND.name,{type:'text/calendar'});if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:'VELOX Training'}).catch(()=>{});else toast('Teilen wird hier nicht unterstützt')}catch(e){toast('Teilen nicht möglich')}}
 function deliverIcs(ics,name){const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  if(isIOS){const url='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);const w=window.open(url,'_blank');if(!w)location.href=url;return}
+  if(isIOS){ICSPEND={ics,name};openSheet(`${sheetHead('Ab in den Kalender')}
+    <div class="small muted" style="margin-top:4px">Als App vom Home-Bildschirm darf VELOX keine Kalenderdateien speichern – das kann nur Safari. Darum der kleine Umweg:</div>
+    <button class="btn acc full" style="margin-top:14px;padding:15px" data-act="icsSafari">📅 Über Safari zum Kalender</button>
+    <div class="tiny muted" style="margin-top:6px">Öffnet ein Fenster → „Zum Kalender hinzufügen“ → „Laden“ → „Alle hinzufügen“. Klappt's dort nicht: unten rechts aufs Safari-Symbol tippen und nochmal.</div>
+    ${navigator.canShare?`<button class="btn full" style="margin-top:12px" data-act="icsShare">📤 Teilen / In Dateien sichern</button><div class="tiny muted" style="margin-top:6px">Datei dann in der Dateien-App antippen → „Zum Kalender hinzufügen“.</div>`:''}`);return}
   const b=new Blob([ics],{type:'text/calendar'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
 function icsPlanChanged(){const P=plan();return Object.entries(S.calExp).filter(([k,t])=>k>=ymd(today())&&(P.find(p=>p.date===k)?.title||'—')!==t).length}
 
@@ -2104,6 +2111,8 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'icsSafari':icsSafari();break;
+    case'icsShare':icsShare();break;
     case'coldTog':S.settings.cold.on=!S.settings.cold.on;save();render();break;
     case'forecast':openForecast();break;
     case'setTargetFc':S.settings.targetTime=fmtTime(+k);save();_cache={};openForecast();render();toast('Zielzeit gesetzt ✓');break;
@@ -2115,7 +2124,7 @@ function act(a,el){const k=el?.dataset?.k;
     case'icsAll':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end);const all=its.every(p=>ICS.sel.has(p.date));ICS.sel=new Set(all?[]:its.map(p=>p.date));openIcs();break}
     case'icsRange':ICS.range=+k;openIcs();break;
     case'icsAlarm':ICS.alarm=+k;openIcs();break;
-    case'icsGo':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end&&ICS.sel.has(p.date));if(!its.length)return;deliverIcs(buildIcs(its,{alarm:ICS.alarm}),'velox-training.ics');closeSheet();render();toast('📅 '+its.length+' Termine – im Dialog „Alle hinzufügen“ tippen',4000);break}
+    case'icsGo':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end&&ICS.sel.has(p.date));if(!its.length)return;const icsTxt=buildIcs(its,{alarm:ICS.alarm});closeSheet();render();deliverIcs(icsTxt,'velox-training.ics');toast('📅 '+its.length+' Termine – im Dialog „Alle hinzufügen“ tippen',4000);break}
     case'icsOne':{const p=plan().find(x=>x.date===k);if(p){deliverIcs(buildIcs([p],{alarm:ICS.alarm}),'velox-'+k+'.ics');toast('📅 Termin exportiert',2500)}break}
     case'wxIn':S.wxSwap[k]='in';save();closeSheet();render();toast('🚲 Auf die Rolle verlegt');break;
     case'wxOut':S.wxSwap[k]='out';save();closeSheet();render();toast('☀️ Ab nach draußen!');break;
