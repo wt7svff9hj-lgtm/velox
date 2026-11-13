@@ -245,7 +245,7 @@ table.z td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabu
 @media(min-width:780px){.ach{grid-template-columns:repeat(6,1fr)}}
 .ach div{background:var(--card2);border-radius:14px;padding:12px 6px;text-align:center;font-size:11px;font-weight:800;line-height:1.25}
 .ach div .e{font-size:26px;display:block;margin-bottom:4px}
-.ach div.lock{opacity:.35;filter:grayscale(1)}
+.ach div.achlock{opacity:.35;filter:grayscale(1)}
 .wiz-dots{display:flex;gap:5px;justify-content:center;margin:4px 0 14px}
 .wiz-dots i{width:22px;height:5px;border-radius:3px;background:var(--card2)}
 .wiz-dots i.on{background:var(--accent)}
@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.6';
+const KEY='velox.v1',VERSION='6.7';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -519,7 +519,7 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -664,6 +664,10 @@ function paces(){return memo('paces',()=>{const thr=thrPaceRaw().v*learn().paceA
 const RUNZ={1:[1.32,1.5],2:[1.2,1.32],3:[1.08,1.16],4:[.98,1.03],4.5:[.95,.99],5:[.9,.95],6:[.82,.88]};
 const RUNHR={1:[0,.84],2:[.85,.89],3:[.9,.94],4:[.95,.99],4.5:[.98,1.02],5:[1,1.06],6:[1.03,1.1]};
 const BIKEZ={1:[0,.55],2:[.56,.75],3:[.76,.87],3.5:[.88,.93],4:[.94,1.05],4.5:[1,1.05],5:[1.06,1.2],6:[1.21,1.5]};
+const BIKEHR={1:[0,.81],2:[.81,.89],3:[.9,.93],3.5:[.94,.97],4:[.97,1.01],4.5:[.98,1.02],5:[1.02,1.06]};
+const LTHRB=()=>num(S.settings.lthrBike)||(LTHR()?LTHR()-5:null);
+function bikeHR(z){const l=LTHRB();if(!l)return null;if(z>=6)return'Puls egal – Vollgas nach Gefühl';const[a,b]=BIKEHR[z]||BIKEHR[2];return z===1?`Puls < ${Math.round(l*b)}`:`Puls ${Math.round(l*a)}–${Math.round(l*b)}`}
+const BIKERPE={1:'ganz locker, Plaudern',2:'locker, ganze Sätze möglich',3:'zügig, kurze Sätze',3.5:'fordernd, nur noch Wortfetzen',4:'hart, gerade noch haltbar',4.5:'hart, gerade noch haltbar',5:'sehr hart',6:'Vollgas'};
 function tgt(sport,z,special){
   const cat=SPORTS[sport].cat;
   if(cat==='run'){const P=paces();
@@ -671,7 +675,9 @@ function tgt(sport,z,special){
     if(z===6)return'locker-schnell (~'+fmtPace(P.thr*.85)+' /km), kein Sprint';
     const [a,b]=RUNZ[z]||RUNZ[2];let s=z===1?`langsamer als ${fmtPace(P.thr*a)} /km`:`${fmtPace(P.thr*a)}–${fmtPace(P.thr*b)} /km`;
     const l=LTHR();if(l&&RUNHR[z]){const[h1,h2]=RUNHR[z];s+=z===1?` · Puls < ${Math.round(l*h2)}`:` · Puls ${Math.round(l*h1)}–${Math.round(l*h2)}`}return s}
-  if(cat==='bike'){const f=S.settings.ftp||250,[a,b]=BIKEZ[z]||BIKEZ[2];const r=x=>Math.round(f*x/5)*5;return z===1?`unter ${r(b)} W`:`${r(a)}–${r(b)} W`}
+  if(cat==='bike'){const f=S.settings.ftp||250,[a,b]=BIKEZ[z]||BIKEZ[2];const r=x=>Math.round(f*x/5)*5,w=z===1?`unter ${r(b)} W`:`${r(a)}–${r(b)} W`;
+    if(sport==='ride'){const h=bikeHR(z);if(!h)return`${BIKERPE[z]||'locker'} (Schwellenpuls fehlt)`;return z>=5&&z<6?`${h} – Puls steigt verzögert, erste Minute nach Gefühl`:h}
+    return w}
   return z<=2?'locker, gut unterhaltbar':z<=4?'kontrolliert anstrengend':'hart'}
 
 /* =====================================================================
@@ -768,7 +774,7 @@ function wBikeQ(ph,wi){
     why:'Beine wach halten ohne Ermüdung.',start:'Locker.',peak:'Die kurzen Spitzen.',cues:['Leicht bleiben.'],alt:'Nur locker.',hard:false})}
 function wBikeEasy(ph,wi,cap){let m=wi.deload?60:ph.k==='T'?45:clamp(70+wi.p*5,70,110);if(cap)m=Math.min(m,cap);
   return mk('ride','bikeEasy',{key:'z2',title:`Rad: Lockere Ausdauerfahrt · ${fmtDur(m)}`,short:'Ruhige Kilometer – Ausdauer ohne die Laufbelastung.',terms:['zone2','grundlage'],steps:[S_('Locker in Zone 2',m,2,{note:'gern mit Höhenmetern, bergauf nicht über Zone 3'})],
-    why:'Radfahren baut Ausdauer auf, ohne Sehnen und Gelenke wie beim Laufen zu belasten – perfekte Ergänzung zum Halbmarathon-Training.',start:'Die ersten 10 min locker einrollen.',peak:'Bergauf ist die Versuchung groß: Watt deckeln, sitzen bleiben.',cues:['Alle 20 min trinken, ab 90 min etwas essen.','Indoor: Zwift-Gruppenfahrt im Zone-2-Bereich.'],alt:'45 min Rolle locker.',hard:false})}
+    why:'Radfahren baut Ausdauer auf, ohne Sehnen und Gelenke wie beim Laufen zu belasten – perfekte Ergänzung zum Halbmarathon-Training.',start:'Die ersten 10 min locker einrollen.',peak:'Bergauf ist die Versuchung groß: Puls deckeln (max. oberes Ende Zone 3), sitzen bleiben.',cues:['Alle 20 min trinken, ab 90 min etwas essen.','Indoor: Zwift-Gruppenfahrt im Zone-2-Bereich.'],alt:'45 min Rolle locker.',hard:false})}
 
 /* =====================================================================
    PLAN-ENGINE
@@ -795,6 +801,16 @@ function build(role,ph,wi,T,k){const base=role.replace(/2$/,''),d=parse(k).getDa
     case'bikeQuality':{const w=wBikeQ(ph,Object.assign({},wi,{p:wi.p+(role.endsWith('2')?1:0)}));w.role=role;return w}
     case'bikeEasy':{const w=wBikeEasy(ph,wi,cap);w.role=role;return w}
     case'recovery':return wRecovery('run')}}
+const MONTH_T=[3,3,7,11,15,18,20,20,16,11,7,4];
+function bikeVenue(){return memo('venue',()=>{const lim=ymd(addD(today(),-400)),b=S.sessions.filter(s=>SPORTS[s.sport]?.cat==='bike'&&s.date>=lim);const thr=S.settings.cold.t;
+  const tOf=s=>s.temp!=null?s.temp:MONTH_T[parse(s.date).getMonth()];const cold=b.filter(s=>tOf(s)<thr+2),warm=b.filter(s=>tOf(s)>=thr+6);
+  const sh=a=>a.length>=3?a.filter(s=>s.sport==='zwift').length/a.length:null;return{cold:sh(cold),warm:sh(warm),nc:cold.length,nw:warm.length}})}
+function dayTemp(k){const d=wxOk()?wxDay(k):null;if(d&&d.amax!=null)return d.amax;if(d&&d.tmax!=null)return d.tmax;return MONTH_T[parse(k).getMonth()]}
+function applyVenue(it){if(!it||it.custom||S.wxSwap[it.date]||SPORTS[it.sport]?.cat!=='bike'||!S.settings.cold.on)return;const V=bikeVenue(),t=dayTemp(it.date),thr=S.settings.cold.t,est=!(wxOk()&&wxDay(it.date));
+  const coldPref=V.cold==null?true:V.cold>=.5;
+  if(t<thr&&coldPref&&it.sport==='ride'){it.sport='zwift';it.title=it.title.replace(/^Rad:/,'Rad indoor:');it.venue=`${est?'Um diese Jahreszeit':'Max.'} ~${Math.round(t)}° – bei Kälte fährst du lieber drinnen, darum auf der Rolle.`;
+    const st=it.steps&&it.steps[0];if(it.role==='bikeEasy'&&it.durMin>75&&st&&st.min){const f=75/it.durMin;st.min=75;it.durMin=75;it.tss=Math.round(it.tss*f);it.title=it.title.replace(/· [0-9:]+ h$/,'· '+fmtDur(75));it.venue+=' Auf 75 min gekürzt – ohne Rollen und Ampelstopps ist das ähnlich wirksam wie eine längere Runde draußen.'}}
+  else if(t>=thr+6&&it.sport==='zwift'&&V.warm!=null&&V.warm<=.4&&it.role!=='recovery'){it.sport='ride';it.title=it.title.replace(/^Rad:/,'Rad draußen:');it.venue=`~${Math.round(t)}° – bei solchem Wetter fährst du meist draußen. Ohne Wattmesser: Pulswerte unten.`}}
 function plan(){return memo('plan',()=>{
   const st=S.settings,t0=today(),out=[];const trainedToday=S.sessions.some(s=>s.date===ymd(t0)&&s.sport!=='walk');const start=trainedToday?addD(t0,1):t0;
   for(let wk=0;wk<3;wk++){
@@ -818,7 +834,8 @@ function plan(){return memo('plan',()=>{
     easyRoles.forEach(r=>{const d=avail.find(d=>!used.has(ymd(d)));if(d){used.add(ymd(d));assign[ymd(d)]=r}});
     Object.keys(assign).forEach(k=>{const w=build(assign[k],ph,wi,T,k);if(w)items.push(Object.assign(w,{date:k,phase:ph.k,deload:wi.deload}))});
     items.sort((a,b)=>a.date<b.date?-1:1);out.push(...items)}
-  out.forEach(it=>{const sw=S.wxSwap[it.date];if(sw==='in'&&it.sport==='ride'){it.sport='zwift';it.title=it.title.replace('Rad:','Rad indoor:');it.wxMoved='Wegen des Wetters auf die Rolle verlegt.'}else if(sw==='out'&&it.sport==='zwift'){it.sport='ride';it.title=it.title.replace('Rad:','Rad draußen:');it.wxMoved='Wegen gutem Wetter nach draußen verlegt.'}});
+  out.forEach(applyVenue);
+  out.forEach(it=>{const sw=S.wxSwap[it.date];if(sw==='in'&&it.sport==='ride'){it.sport='zwift';it.title=it.title.replace(/^Rad( draußen)?:/,'Rad indoor:');it.wxMoved='Wegen des Wetters auf die Rolle verlegt.'}else if(sw==='out'&&it.sport==='zwift'){it.sport='ride';it.venue=null;it.title=it.title.replace(/^Rad( indoor)?:/,'Rad draußen:');it.wxMoved='Wegen gutem Wetter nach draußen verlegt.'}});
   const R=readiness();
   if(out.length){const n=out[0];if(dBetween(t0,parse(n.date))<=1&&n.hard&&!n.custom){
     if(R.v<42&&n.date===ymd(t0)){out[0]=Object.assign(wRecovery(n.sport),{date:n.date,adjusted:`Deine Tagesbereitschaft ist niedrig (${R.v}${R.neg.length?': '+R.neg.join(', '):''}). Statt „${n.title}“ heute Erholung – die Schlüsseleinheit holst du frisch nach.`,orig:n})}
@@ -1045,7 +1062,7 @@ function vHome(){
   ${n?`<div class="card hero fade" id="nextCard"><div class="bigicon">${ic(n.sport)}</div>
     <div class="row between"><span class="lbl">${when(n.date)} · ${SPORTS[n.sport].n}</span><span class="chip">${n.hard?'⭐ Schlüsseleinheit':ph.n}${n.deload?' · Entlastung':''}</span></div>
     <div class="title">${esc(n.title)}</div><div style="font-size:15px;font-weight:600">${esc(n.short)}</div>
-    ${n.adjusted?`<div class="chip" style="margin-top:10px;white-space:normal">${ic('warn')} an deine Tagesform angepasst</div>`:''}
+    ${n.adjusted?`<div class="chip" style="margin-top:10px;white-space:normal">${ic('warn')} an deine Tagesform angepasst</div>`:''}${n.venue?`<div class="chip" style="margin-top:10px;white-space:normal">${n.sport==='zwift'?'🏠':'🌳'} ${esc(n.venue)}</div>`:''}
     ${profileBars(n)}
     <div class="stats"><div class="stat"><b>${fmtDur(n.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${n.distKm?fmtKm(n.distKm)+' km':zoneOf(n.IF)}</b><span>${n.distKm?'Distanz':'Tempo'}</span></div><div class="stat"><b>${n.tss}</b><span>Belastung${Q('belastung')}</span></div></div>
     ${wxHero(n)}${(f=>f&&!f.short&&f.pack.length?`<div class="fuelbox">${esc(f.summary)}</div>`:'')(fuelPlan(n))}
@@ -1168,14 +1185,14 @@ function vAna(){
   <h2>${ic('target')} Deine Zonen<span class="line"></span><a data-term="zonen">Was ist das?</a></h2>
   <div class="grid g2">
     <div class="card fade"><div class="lbl">Laufen · ${T('schwelle','Schwelle')} ${fmtPace(P.thr)} /km (${thr.src})</div><table class="z">${[[1,'Z1 Erholung'],[2,'Z2 Locker'],[3,'Z3 Zügig'],[4,'Z4 Schwelle'],[5,'Z5 Sehr hart']].map(([z,n])=>`<tr><td><i class="zdot" style="background:${Z_COL[z]}"></i>${n}</td><td>${tgt('run',z)}</td></tr>`).join('')}<tr><td><i class="zdot" style="background:var(--z4)"></i>${T('hmtempo','HM-Renntempo')}</td><td>${fmtPace(P.hm)} /km</td></tr></table></div>
-    <div class="card fade"><div class="lbl">Rad · ${T('ftp','FTP')} ${S.settings.ftp} W</div><table class="z">${[[1,'Z1 Erholung'],[2,'Z2 Locker'],[3,'Z3 Zügig'],[3.5,'Sweet Spot'],[4,'Z4 Schwelle'],[5,'Z5 Sehr hart'],[6,'Z6 Sprint']].map(([z,n])=>`<tr><td><i class="zdot" style="background:${Z_COL[z]}"></i>${n}</td><td>${tgt('zwift',z)}</td></tr>`).join('')}</table></div>
+    <div class="card fade"><div class="lbl">Rad · ${T('ftp','FTP')} ${S.settings.ftp} W${LTHRB()?` · Schwelle Puls ${LTHRB()}`:''}</div><table class="z">${[[1,'Z1 Erholung'],[2,'Z2 Locker'],[3,'Z3 Zügig'],[3.5,'Sweet Spot'],[4,'Z4 Schwelle'],[5,'Z5 Sehr hart'],[6,'Z6 Sprint']].map(([z,n])=>`<tr><td><i class="zdot" style="background:${Z_COL[z]}"></i>${n}</td><td>${tgt('zwift',z)}${z<6&&bikeHR(z)?` · ${bikeHR(z)}`:''}</td></tr>`).join('')}</table><div class="tiny muted" style="margin-top:8px">🏠 Indoor nach Watt · 🌳 draußen ohne Wattmesser nach Puls. ${num(S.settings.lthrBike)?'':'Rad-Schwellenpuls geschätzt (Lauf − 5) – im Setup anpassbar.'}</div></div>
   </div>
   <h2>${ic('trophy')} Bestwerte<span class="line"></span></h2>
   <div class="card list fade">${[['run','Längster Lauf',longest?fmtKm(longest.distKm)+' km · '+fmtDate(longest.date):'–'],['run','Schnellster Lauf ≥ 5 km',fast5?fmtPace(fast5.durMin*60/fast5.distKm)+' /km · '+fmtKm(fast5.distKm)+' km · '+fmtDate(fast5.date):'–'],['run','Schnellster Lauf ≥ 10 km',fast10?fmtPace(fast10.durMin*60/fast10.distKm)+' /km · '+fmtKm(fast10.distKm)+' km':'–'],['zwift','Höchste Leistung (≥ 20 min)',bestW?(bestW.np||bestW.watts)+' W · '+fmtDur(bestW.durMin)+' · '+fmtDate(bestW.date):'–'],['ride','Meiste Höhenmeter',mostHm?mostHm.elev+' hm · '+fmtDate(mostHm.date):'–'],['other','Stärkste Woche',bigWeek&&bigWeek.tss?Math.round(bigWeek.tss)+' Pkt. · '+fmtN(bigWeek.h,1)+' h · KW '+isoWeek(bigWeek.a):'–']].map(([k,t,m])=>`<div class="item" style="cursor:default">${sIco(k)}<div class="grow"><div class="t">${t}</div><div class="m">${m}</div></div></div>`).join('')}</div>
   <h2>🎬 Rückblicke<span class="line"></span></h2>
   <div class="grid g3">${wrapButtons()}</div>
   <h2>${ic('medal')} Erfolge<span class="line"></span><span class="tiny">${Object.keys(S.badges).length}/${ACH.length}</span></h2>
-  <div class="card fade"><div class="ach">${ACH.map(([id,e,t])=>`<div class="${S.badges[id]?'':'lock'}"><span class="e">${e}</span>${t}${S.badges[id]?`<div class="tiny muted" style="font-weight:600;margin-top:3px">${fmtDate(S.badges[id],{day:'numeric',month:'short'})}</div>`:''}</div>`).join('')}</div></div>
+  <div class="card fade"><div class="ach">${ACH.map(([id,e,t])=>`<div class="${S.badges[id]?'':'achlock'}"><span class="e">${e}</span>${t}${S.badges[id]?`<div class="tiny muted" style="font-weight:600;margin-top:3px">${fmtDate(S.badges[id],{day:'numeric',month:'short'})}</div>`:''}</div>`).join('')}</div></div>
   ${S.gear.length?`<h2>${ic('shoe')} Ausrüstung<span class="line"></span></h2><div class="card fade">${S.gear.map(gearRow).join('')}</div>`:''}`}
 const gearKm=g=>sum(S.sessions.filter(s=>s.gearId===g.id),s=>s.distKm||0)+(+g.startKm||0);
 function gearRow(g){const km=gearKm(g),lim=+g.limit||(g.type==='shoe'?700:0),p=lim?km/lim:0;
@@ -1195,7 +1212,7 @@ function vSet(){
   <h2>${ic('heart')} Puls & Leistung<span class="line"></span></h2>
   <div class="card">
     <div class="f2"><div class="field"><label>Ruhepuls${Q('ruhepuls')}</label><input class="inp" inputmode="numeric" data-set="hrRest" value="${esc(st.hrRest)}" placeholder="z. B. 52"></div><div class="field"><label>Max-Puls${Q('maxpuls')}</label><input class="inp" inputmode="numeric" data-set="hrMax" value="${esc(st.hrMax)}" placeholder="${age()?'≈ '+Math.round(208-.7*age()):'z. B. 190'}"></div></div>
-    <div class="field"><label>Schwellenpuls${Q('schwellenpuls')}</label><input class="inp" inputmode="numeric" data-set="lthr" value="${esc(st.lthr)}" placeholder="${LTHR()?'≈ '+LTHR()+' (geschätzt)':'optional'}"></div>
+    <div class="f2"><div class="field"><label>Schwellenpuls Lauf${Q('schwellenpuls')}</label><input class="inp" inputmode="numeric" data-set="lthr" value="${esc(st.lthr)}" placeholder="${LTHR()?'≈ '+LTHR()+' (geschätzt)':'optional'}"></div><div class="field"><label>Schwellenpuls Rad</label><input class="inp" inputmode="numeric" data-set="lthrBike" value="${esc(st.lthrBike||'')}" placeholder="${LTHRB()?'≈ '+LTHRB()+' (geschätzt)':'optional'}"></div></div>
     <div class="f2"><div class="field"><label>FTP (Watt)${Q('ftp')}</label><input class="inp" inputmode="numeric" data-set="ftp" value="${esc(st.ftp)}"></div><div class="field"><label>FTP getestet am</label><input class="inp" type="date" data-set="ftpDate" value="${esc(st.ftpDate)}"></div></div>
     <div class="f2"><div class="field"><label>5-km-Zeit</label><input class="inp" data-set="fiveK" value="${esc(st.fiveK)}" placeholder="mm:ss"></div><div class="field"><label>Schwellen-Pace${Q('schwelle')}</label><input class="inp" data-set="thrPace" value="${esc(st.thrPace)}" placeholder="auto ${fmtPace(thrPaceRaw().v)}"></div></div>
     <div class="field"><label>Ausgangsfitness beim Start</label><div class="chips">${[[15,'Wiedereinstieg'],[30,'Moderat'],[50,'Gut trainiert']].map(([v,l])=>`<button class="chip ${+st.startFit===v?'on':''}" data-fit="${v}">${l}</button>`).join('')}</div></div>
@@ -1231,7 +1248,8 @@ function vSet(){
     <div class="field"><label>Elektrolyt-Portion heißt</label><div class="chips">${['Tab','Messlöffel','Stick'].map(x=>`<button class="chip ${S.settings.fuel.elecUnit===x?'on':''}" data-act="fuelUnit" data-k="${x}">${x}</button>`).join('')}</div></div></div>
   <h2>🌤️ Wetter-Coach<span class="line"></span></h2>
   <div class="card"><div class="row between"><div><b>${S.settings.wx.lat!=null?esc(S.settings.wx.name||'Mein Standort'):'Kein Standort'}</b><div class="tiny muted">Vorhersage von Open-Meteo · passt Zeit, Ort & Kleidung an</div></div><button class="sw ${S.settings.wx.on?'on':''}" data-act="wxToggle"></button></div>
-    <div class="btnrow"><button class="btn" data-act="wxGps">📍 Standort</button><button class="btn" data-act="wxSetup">Ort suchen</button></div></div>
+    <div class="btnrow"><button class="btn" data-act="wxGps">📍 Standort</button><button class="btn" data-act="wxSetup">Ort suchen</button></div>
+    <div class="tog" style="margin-top:10px"><span class="small"><b>🥶 Bei Kälte Rad auf die Rolle</b><br><span class="muted">unter <input class="inp" style="display:inline-block;width:56px;padding:4px 8px;font-size:14px" inputmode="numeric" data-cold="t" value="${S.settings.cold.t}"> °C${(v=>v.cold!=null?` · gelernt: bei Kälte ${Math.round(v.cold*100)} % drinnen`:'')(bikeVenue())}${(v=>v.warm!=null?`, bei Wärme ${Math.round((1-v.warm)*100)} % draußen`:'')(bikeVenue())}</span></span><button class="sw ${S.settings.cold.on?'on':''}" data-act="coldTog"></button></div></div>
   <h2>${ic('download')} App & Version<span class="line"></span></h2>
   <div class="card"><div class="row between"><div><b>VELOX v${VERSION}</b><div class="tiny muted">${updAvail()?'Neue Version v'+updAvail()+' verfügbar':localStorage.getItem('velox.lastCheck')?'Zuletzt geprüft: '+new Date(+localStorage.getItem('velox.lastCheck')).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Noch nicht geprüft'}</div></div>${updAvail()?'<span class="badge acc">Update</span>':'<span class="badge good">Aktuell</span>'}</div>
     <div class="btnrow">${updAvail()?`<button class="btn acc" data-act="doUpdate">${ic('download')} Jetzt aktualisieren</button>`:`<button class="btn" data-act="checkUpdate">${ic('sync')} Nach Updates suchen</button>`}</div></div>
@@ -1558,7 +1576,7 @@ function coachWx(p){if(!p||!wxOk())return null;const k=p.date,day=wxDay(k);if(!d
   const P=pw.w,a=avg(P.map(x=>x.a)),t=avg(P.map(x=>x.t)),pp=Math.max(...P.map(x=>x.pp)),pr=sum(P,x=>x.pr),ws=Math.max(...P.map(x=>x.ws)),wc=P.map(x=>x.wc).sort((x,y)=>y-x)[0],dark=P.some(x=>!x.day);
   const storm=wc>=95,icy=P.some(isIcy),wet=pp>=60&&pr>=.4,heat=a>=27,windy=ws>=35,cold=a<=-5;
   const [em,txt]=WMO(wc);const r={sev:'ok',summary:`${em} ${Math.round(t)}° (gefühlt ${Math.round(a)}°) · ${txt} · Regen ${Math.round(pp)} % · Wind ${Math.round(ws)} km/h`,at:pw.h,feel:a,best:best.h!==pw.h&&pw.sc-best.sc>25?best.h:null,hours:hrs,clothes:clothesFor(p.sport,a,wet,windy,dark)};
-  if(indoor){if(p.sport==='zwift'&&!wet&&!storm&&!icy&&a>=8&&a<=25&&ws<25&&!dark){r.title='Top-Wetter draußen ☀️';r.text='Die Rad-Einheit geht heute auch draußen – gleiche Watt-Vorgaben, am besten auf einer flachen oder welligen Runde.';r.action=['wxOut','Draußen fahren']}
+  if(indoor){if(p.sport==='zwift'&&!wet&&!storm&&!icy&&a>=8&&a<=25&&ws<25&&!dark){r.title='Top-Wetter draußen ☀️';r.text='Die Rad-Einheit geht heute auch draußen – statt Watt dann nach Puls (steht in der Einheit), am besten auf einer flachen oder welligen Runde.';r.action=['wxOut','Draußen fahren']}
     else{r.title='Indoor – Wetter egal 😎';r.text='Ventilator an, Flasche bereit.';r.clothes=['Ventilator & Handtuch','Zwei Flaschen Wasser']}return r}
   if(storm){r.sev='bad';r.title='⛈️ Gewitter angesagt';r.text=bikeOut?'Nicht draußen fahren – die Einheit geht 1:1 auf der Rolle.':'Bei Gewitter nicht draußen laufen.'+(r.best!=null?` Besser um ${r.best} Uhr.`:' Laufband oder verschieben.')}
   else if(icy){r.sev=bikeOut?'bad':'warn';r.title='🧊 Glättegefahr';r.text=bikeOut?'Rennrad + Glätte = Sturzgefahr. Heute auf die Rolle.':'Rutschige Wege möglich: Schuhe mit Profil, beleuchtete Strecken, Tempo rausnehmen.'}
@@ -2000,6 +2018,7 @@ const HELP={
   weight:'<b>Gewicht in kg</b>, am besten morgens nüchtern. Quelle: Waage oder Health-App → Körpermaße.',
   hrRest:'<b>Ruhepuls</b>: morgens direkt nach dem Aufwachen im Liegen. Apple Watch: <b>Health-App → Herz → Ruheherzfrequenz</b>. Garmin: Connect → Herzfrequenz.',
   hrMax:'<b>Höchster Puls</b>, den du je erreicht hast. Strava: bei deinen härtesten Einheiten → „Max. Herzfrequenz“. Leer lassen = Schätzung aus deinem Alter.',
+  lthrBike:'<b>Schwellenpuls Rad</b>: Ø-Puls der letzten 20 min eines 20–30-min-All-out-Tests auf dem Rad. Meist 5–10 Schläge unter dem Lauf-Wert. Leer = Lauf-Wert − 5.',
   lthr:'<b>Schwellenpuls</b>: Ø-Puls der letzten 20 min eines 30-min-All-out-Laufs. Garmin zeigt ihn teils unter Leistungswerte → Laktatschwelle. Optional – sonst schätzt VELOX.',
   ftp:'<b>FTP in Watt</b>: Zwift zeigt sie im Menü/Profil. Oder: 20 min so hart wie möglich fahren, Ø-Watt × 0,95.',
   ftpDate:'Wann du deine <b>FTP zuletzt getestet</b> hast – damit VELOX dich an den nächsten Test erinnert.',
@@ -2047,6 +2066,7 @@ function bind(){const A=$('#app');
   $$('[data-tabgo]',A).forEach(e=>e.onclick=()=>go(e.dataset.tabgo));
   $$('[data-range]',A).forEach(e=>e.onclick=()=>{RANGE=+e.dataset.range;render()});
   $$('[data-set]',A).forEach(e=>e.onchange=()=>{let v=e.value;const k=e.dataset.set;if(k==='ftp'){v=num(v)||S.settings.ftp;S.settings.ftpDate=S.settings.ftpDate||ymd(today())}if(k==='weight')S.settings.weightDate=ymd(today());if(k==='raceDate')S.settings.raceDateOk=true;S.settings[k]=v;S.meta[k]=ymd(today());if(k==='ftp')S.settings.ftpDate=ymd(today());save();render()});
+  $$('[data-cold]',A).forEach(e=>e.onchange=()=>{const v=num(e.value);if(v!=null&&isFinite(v))S.settings.cold.t=v;save();render()});
   $$('[data-fuel]',A).forEach(e=>e.onchange=()=>{const v=num(e.value);if(v)S.settings.fuel[e.dataset.fuel]=v;save();render()});
   $$('[data-sync]',A).forEach(e=>e.onchange=()=>{S.settings.sync[e.dataset.sync]=e.value.trim();if(e.dataset.sync==='pass')S.settings.sync.salt=S.settings.sync.gistId?S.settings.sync.salt:'';save(true)});
   $$('[data-fit]',A).forEach(e=>e.onclick=()=>{S.settings.startFit=+e.dataset.fit;save();render()});
@@ -2084,6 +2104,7 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'coldTog':S.settings.cold.on=!S.settings.cold.on;save();render();break;
     case'forecast':openForecast();break;
     case'setTargetFc':S.settings.targetTime=fmtTime(+k);save();_cache={};openForecast();render();toast('Zielzeit gesetzt ✓');break;
     case'fuelTog':S.settings.fuel[k]=!S.settings.fuel[k];save();render();break;
