@@ -262,6 +262,13 @@ table.z td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabu
 .wxnow .hrs div{flex:1;min-width:38px;text-align:center;font-size:11px;font-weight:700;color:var(--muted)}
 .wxnow .hrs div b{display:block;color:var(--text);font-size:13px}.wxnow .hrs div span{display:block;font-size:17px;margin:2px 0}
 .wxnow .hrs div i{display:block;font-style:normal;color:var(--c-ride);font-size:10.5px}
+.fuel{margin-top:4px}
+.fuel .pack{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.fuel .pack span{background:color-mix(in srgb,currentColor 9%,transparent);border-radius:10px;padding:6px 9px;font-size:12.5px;font-weight:800}
+.fuel .tl{display:flex;flex-direction:column;gap:3px;font-size:12.5px;margin-top:6px}
+.fuel .tl div{display:grid;grid-template-columns:46px 1fr;gap:8px}
+.fuel .tl b{font-variant-numeric:tabular-nums;opacity:.75}
+.fuelbox{margin-top:10px;border-radius:14px;padding:10px 12px;background:color-mix(in srgb,var(--accentText) 8%,transparent);font-size:13px;font-weight:700}
 .wxrow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
 .wxd{background:var(--card2);border-radius:13px;padding:8px 2px;text-align:center;cursor:pointer;position:relative}
 .wxd .d{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase}.wxd .e{font-size:22px;line-height:1.3}.wxd .t{font-size:12px;font-weight:800}.wxd .r{font-size:10.5px;color:var(--c-ride);font-weight:700}
@@ -387,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.3';
+const KEY='velox.v1',VERSION='6.6';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -512,7 +519,7 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -778,7 +785,7 @@ function classify(s){const cat=SPORTS[s.sport]?.cat;
   if(cat==='bike'){if(['intervals','tempo','race'].includes(s.kind))return'bikeQuality';if(s.fromRole)return s.fromRole;return sessionLoad(s).IF>=.82?'bikeQuality':'bikeEasy'}
   return null}
 function overrideRole(o){if(o.kind!=='custom')return null;const cat=SPORTS[o.sport]?.cat;if(cat==='run')return o.intensity==='hart'?'quality':o.intensity==='lang'?'long':'easyRun';if(cat==='bike')return o.intensity==='hart'?'bikeQuality':'bikeEasy';return null}
-function customItem(k,o){return mk(o.sport,'custom',{key:'custom',custom:true,title:o.title||SPORTS[o.sport].n,short:o.note||'Von dir selbst geplant.',steps:[S_(o.title||'Training',o.durMin||45,o.intensity==='hart'?4:2)],why:'Von dir selbst geplant. Der restliche Plan passt sich darum herum an.',cues:o.note?[o.note]:[],hard:o.intensity==='hart'||o.intensity==='lang',date:k})}
+function customItem(k,o){return mk(o.sport,'custom',{key:'custom',custom:true,title:o.title||SPORTS[o.sport].n,distKm:num(o.distKm)||undefined,elev:num(o.elev)||undefined,short:o.note||[o.distKm?fmtKm(num(o.distKm))+' km':'',o.elev?num(o.elev)+' Höhenmeter':''].filter(Boolean).join(' · ')||'Von dir selbst geplant.',steps:[S_(o.title||'Training',o.durMin||45,o.intensity==='hart'?4:o.intensity==='lang'&&num(o.elev)>=500?3:2,{note:o.elev?`${o.elev} hm – bergauf gleichmäßig, nicht überziehen`:''})],why:'Von dir selbst geplant. Der restliche Plan passt sich darum herum an.',cues:o.note?[o.note]:[],hard:o.intensity==='hart'||o.intensity==='lang',date:k})}
 function roleOrder(n){const run=['long','quality','easyRun','bikeQuality','bikeEasy','easyRun2','bikeEasy2'],bike=['bikeQuality','long','bikeEasy','quality','easyRun','bikeQuality2','bikeEasy2'];return(S.settings.focus==='bike'?bike:run).slice(0,n)}
 function build(role,ph,wi,T,k){const base=role.replace(/2$/,''),d=parse(k).getDay(),wkday=d>=1&&d<=5,L=learn(),cap=S.settings.learn&&wkday?L.weekdayCap:null;
   switch(base){
@@ -908,7 +915,7 @@ function workoutDetail(w){return`<div class="det">
   ${w.start?`<h4>${ic('sunrise')} So startest du</h4><div class="small">${esc(w.start)}</div>`:''}
   ${w.peak?`<h4>${ic('flame')} Der wichtigste Moment</h4><div class="small">${esc(w.peak)}</div>`:''}
   ${w.cues?.length?`<h4>${ic('sparkle')} Coach-Tipps</h4><ul class="small">${w.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
-  ${w.fuel?`<h4>${ic('coffee')} Essen & Trinken</h4><div class="small">${esc(w.fuel)}</div>`:''}
+  ${fuelHTML(w)}
   ${w.why?`<h4>${ic('target')} Warum diese Einheit</h4><div class="small">${esc(w.why)}</div>`:''}
   ${wxDetail(w)}${w.wxMoved?`<div class="small" style="margin-top:8px">🌤️ ${esc(w.wxMoved)}</div>`:''}
   ${w.alt?`<h4>${ic('skip')} Wenn's heute nicht läuft</h4><div class="small">${esc(w.alt)}</div>`:''}
@@ -1041,9 +1048,9 @@ function vHome(){
     ${n.adjusted?`<div class="chip" style="margin-top:10px;white-space:normal">${ic('warn')} an deine Tagesform angepasst</div>`:''}
     ${profileBars(n)}
     <div class="stats"><div class="stat"><b>${fmtDur(n.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${n.distKm?fmtKm(n.distKm)+' km':zoneOf(n.IF)}</b><span>${n.distKm?'Distanz':'Tempo'}</span></div><div class="stat"><b>${n.tss}</b><span>Belastung${Q('belastung')}</span></div></div>
-    ${wxHero(n)}
+    ${wxHero(n)}${(f=>f&&!f.short&&f.pack.length?`<div class="fuelbox">${esc(f.summary)}</div>`:'')(fuelPlan(n))}
     <div class="more ${openNext?'open':''}" id="nextMore"><div>${workoutDetail(n)}</div></div>
-    <div class="btnrow"><button class="btn" data-act="toggleNext">${ic(openNext?'chevd':'info')} ${openNext?'Weniger':'So geht\'s'}</button><button class="btn solid" data-done="${n.date}">${ic('check')} Erledigt</button><button class="btn" data-act="other" data-k="${n.date}" aria-label="Anderes Training" style="flex:0 0 48px">${ic('edit')}</button></div></div>`
+    <div class="btnrow"><button class="btn" data-act="toggleNext">${ic(openNext?'chevd':'info')} ${openNext?'Weniger':'So geht\'s'}</button><button class="btn solid" data-done="${n.date}">${ic('check')} Erledigt</button><button class="btn" data-act="icsOne" data-k="${n.date}" aria-label="In Kalender" style="flex:0 0 48px">📅</button><button class="btn" data-act="other" data-k="${n.date}" aria-label="Anderes Training" style="flex:0 0 48px">${ic('edit')}</button></div></div>`
   :`<div class="card"><div class="empty">${ic('cal')}Keine Trainingstage geplant.<br>Lege im Setup deine Trainingstage fest.</div></div>`}
   <div class="grid g2" style="margin-top:12px">
     <div class="card fade" data-act="morning" style="cursor:pointer"><div class="row" style="gap:16px">${ring(R.v/100,92,9,R.c,R.v,'BEREIT')}<div class="grow"><div class="lbl">Tagesbereitschaft${Q('bereitschaft')}</div><div class="mid" style="color:${R.c}">${R.t}</div><div class="small muted">${R.neg.length?'Bremst: '+R.neg.join(', '):R.why.length?'Plus: '+R.why.join(', '):'Basis: deine Trainingsform'}</div></div></div>
@@ -1058,7 +1065,7 @@ function vHome(){
     <div class="card fade span2"><div class="row between"><div class="lbl">${ic('flag')} ${esc(S.settings.raceName)}</div><span class="badge acc">${ph.n}</span></div>
       <div class="row" style="margin-top:8px;gap:10px;align-items:baseline"><span class="big" data-count="${daysTo!=null&&daysTo>=0?daysTo:0}">0</span><span class="muted">Tage · ${S.settings.raceDate?fmtDate(S.settings.raceDate,{day:'numeric',month:'long',year:'numeric'}):'Datum fehlt'}</span></div>
       <div class="stats"><div class="stat"><b>${hm?fmtTime(hm.t):'–'}</b><span>Prognose${Q('prognose')}</span></div><div class="stat"><b>${tg?fmtTime(tg):'–'}</b><span>Ziel</span></div><div class="stat"><b>${fmtPace(paces().hm)}</b><span>Pace${Q('hmtempo')}</span></div></div>
-      ${phaseBar()}<div class="tiny muted" style="margin-top:8px">${PH_TXT[ph.k]}</div></div>
+      ${phaseBar()}<div class="tiny muted" style="margin-top:8px">${PH_TXT[ph.k]}</div>${hm?`<button class="btn sm" data-act="forecast" style="margin-top:10px">📈 Prognose-Verlauf</button>`:''}</div>
   </div>
   ${wxCard()}
   <h2>${ic('sparkle')} Coach sagt<span class="line"></span><a data-tabgo="ana">Alle ${ic('chev')}</a></h2><div class="card fade">${ins.map(insHTML).join('')}</div>
@@ -1134,6 +1141,8 @@ function vAna(){
       <div class="bars" style="margin:16px 0 12px"><span style="width:${ID.t?ID.z.lo/ID.t*100:0}%;background:var(--z2)"></span><span style="width:${ID.t?ID.z.mid/ID.t*100:0}%;background:var(--z3)"></span><span style="width:${ID.t?ID.z.hi/ID.t*100:0}%;background:var(--z5)"></span></div>
       ${[['lo','Locker','var(--z2)'],['mid','Mittel','var(--z3)'],['hi','Hart','var(--z5)']].map(([k,n,c])=>`<div class="kv"><span><i class="zdot" style="background:${c}"></i>${n}</span><b>${ID.t?Math.round(ID.z[k]/ID.t*100):0} % · ${fmtDur(ID.z[k])}</b></div>`).join('')}</div>
   </div>
+  <h2>${ic('flag')} Halbmarathon<span class="line"></span></h2>
+  ${fcCard()}
   <h2>${ic('run')} Laufen<span class="line"></span></h2>
   <div class="grid g2">
     <div class="card fade"><div class="lbl">Pace je Lauf & HM-Prognose${Q('pace')}</div>${runs.length?lineChart([{v:runs.map(r=>r.durMin/r.distKm),c:sc('run'),dots:true},{v:pred,c:'var(--accent)',w:2.2,last:true}],rl,{fmt:v=>fmtPace(v*60),h:170}):`<div class="empty">${ic('run')}Trage Läufe ein, um den Fortschritt zu sehen.</div>`}
@@ -1215,6 +1224,11 @@ function vSet(){
     <button class="btn sm" style="margin-top:10px" data-act="resetTheme">Design zurücksetzen</button></div>
   <h2>${ic('book')} Wissen<span class="line"></span></h2>
   <div class="card list"><div class="item" data-act="lexicon">${sIco('other')}<div class="grow"><div class="t">Lexikon</div><div class="m">${Object.keys(GL).length} Fachbegriffe einfach erklärt</div></div>${ic('chev','muted')}</div></div>
+  <h2>🍌 Meine Verpflegung<span class="line"></span></h2>
+  <div class="card"><div class="small muted">VELOX rechnet Kohlenhydrate, Trinken und Elektrolyte mit deinen Produkten.</div>
+    ${[['dates','Datteln','dateKH','g KH pro Dattel'],['gels','Gels','gelKH','g KH pro Gel'],['malto','Maltodextrin in der Flasche',null,''],['elec','Elektrolyte','elecMg','mg Natrium pro Portion'],['bars','Riegel','barKH','g KH pro Riegel'],['banana','Bananen',null,'']].map(([k,l,f,u])=>`<div class="tog"><span class="small"><b>${l}</b>${f&&S.settings.fuel[k]?`<br><span class="muted">${u}: <input class="inp" style="display:inline-block;width:70px;padding:4px 8px;font-size:14px;margin-top:4px" inputmode="numeric" data-fuel="${f}" value="${S.settings.fuel[f]}"></span>`:''}</span><button class="sw ${S.settings.fuel[k]?'on':''}" data-act="fuelTog" data-k="${k}"></button></div>`).join('')}
+    <div class="f3" style="margin-top:10px"><div class="field"><label>Radflasche ml</label><input class="inp" inputmode="numeric" data-fuel="bottle" value="${S.settings.fuel.bottle}"></div><div class="field"><label>Flaschenhalter</label><input class="inp" inputmode="numeric" data-fuel="holders" value="${S.settings.fuel.holders}"></div><div class="field"><label>Lauf-Flask ml</label><input class="inp" inputmode="numeric" data-fuel="flask" value="${S.settings.fuel.flask}"></div></div>
+    <div class="field"><label>Elektrolyt-Portion heißt</label><div class="chips">${['Tab','Messlöffel','Stick'].map(x=>`<button class="chip ${S.settings.fuel.elecUnit===x?'on':''}" data-act="fuelUnit" data-k="${x}">${x}</button>`).join('')}</div></div></div>
   <h2>🌤️ Wetter-Coach<span class="line"></span></h2>
   <div class="card"><div class="row between"><div><b>${S.settings.wx.lat!=null?esc(S.settings.wx.name||'Mein Standort'):'Kein Standort'}</b><div class="tiny muted">Vorhersage von Open-Meteo · passt Zeit, Ort & Kleidung an</div></div><button class="sw ${S.settings.wx.on?'on':''}" data-act="wxToggle"></button></div>
     <div class="btnrow"><button class="btn" data-act="wxGps">📍 Standort</button><button class="btn" data-act="wxSetup">Ort suchen</button></div></div>
@@ -1442,14 +1456,24 @@ function openDay(k){
 function openOther(k){openSheet(`${sheetHead('Anderes Training')}<div class="small muted" style="margin:6px 0 12px">Du entscheidest – der Plan passt sich an.</div>
   <div class="list card">${[['other','newday','Schon etwas anderes gemacht?','Eintragen (oder Screenshot) → neue Empfehlung.'],['zwift','planOwn','Eigenes Training planen','Ersetzt die Empfehlung an diesem Tag.'],['walk','rest','Heute aussetzen','Ruhetag – die Einheiten verteilen sich neu.'],['run','easier','Lockere Alternative','Statt der harten Einheit eine Erholungseinheit.']].map(([i,a,t,d])=>`<div class="item" ${a==='newday'?`data-newday="${ymd(today())}"`:`data-act="${a}" data-k="${k}"`}>${sIco(i)}<div class="grow"><div class="t">${t}</div><div class="m">${d}</div></div>${ic('chev','muted')}</div>`).join('')}</div>`)}
 let PF=null;
-function openPlanOwn(k){PF={date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:45,intensity:'locker',note:''};renderPlanOwn()}
-function renderPlanOwn(){openSheet(`${sheetHead('Eigenes Training planen')}
+function openPlanOwn(k){PF={date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:'',distKm:'',elev:'',intensity:'locker',note:'',durManual:false};renderPlanOwn()}
+function renderPlanOwn(){const cat=SPORTS[PF.sport].cat;openSheet(`${sheetHead('Eigenes Training planen')}
   <div class="field"><label>Sportart</label><div class="sports">${Object.entries(SPORTS).filter(([k])=>k!=='walk').map(([k,s])=>`<div class="sp ${PF.sport===k?'on':''}" data-psp="${k}" style="color:${sc(k)}">${ic(k)}<span style="color:var(--text)">${s.n}</span></div>`).join('')}</div></div>
-  <div class="f2"><div class="field"><label>Datum</label><input class="inp" type="date" data-pf="date" value="${PF.date}" min="${ymd(today())}"></div><div class="field"><label>Dauer (min)</label><input class="inp" inputmode="numeric" data-pf="durMin" value="${PF.durMin}"></div></div>
-  <div class="field"><label>Titel</label><input class="inp" data-pf="title" value="${esc(PF.title)}" placeholder="z. B. Gruppenausfahrt, Parkrun, Zwift-Rennen"></div>
+  <div class="field"><label>Datum</label><input class="inp" type="date" data-pf="date" value="${PF.date}" min="${ymd(today())}"></div>
+  ${['run','bike','swim'].includes(cat)?`<div class="f2"><div class="field"><label>Distanz (km)</label><input class="inp" inputmode="decimal" data-pf="distKm" value="${PF.distKm}" placeholder="${cat==='bike'?'z. B. 100':'z. B. 12'}"></div><div class="field"><label>Höhenmeter</label><input class="inp" inputmode="numeric" data-pf="elev" value="${PF.elev}" placeholder="z. B. 1000"></div></div>`:''}
+  <div class="field"><label>Dauer (min)</label><input class="inp" inputmode="numeric" data-pf="durMin" value="${PF.durMin}" placeholder="wird aus Distanz geschätzt"></div>
+  <div class="field"><label>Titel</label><input class="inp" data-pf="title" value="${esc(PF.title)}" placeholder="z. B. Radtour Eifel, Parkrun, Gruppenausfahrt"></div>
   <div class="field"><label>Intensität</label><div class="chips">${['locker','lang','hart'].map(x=>`<button class="chip ${PF.intensity===x?'on':''}" data-int="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>
+  <div class="card" id="pfFuel" style="margin-top:6px">${pfFuelHTML()}</div>
   <div class="field"><label>Notiz</label><input class="inp" data-pf="note" value="${esc(PF.note)}" placeholder="optional"></div>
-  <button class="btn acc full" data-act="savePlanOwn" style="padding:15px">${ic('check')} In Plan übernehmen</button>`)}
+  <button class="btn acc full" data-act="savePlanOwn" style="padding:15px">${ic('check')} In Plan übernehmen</button>`);
+  $$('#sheet [data-pf]').forEach(i=>i.addEventListener('input',()=>{if(i.dataset.pf==='durMin')PF.durManual=!!i.value;collectPF();updPF()}))}
+function pfItem(){const d=PF.durManual&&num(PF.durMin)?num(PF.durMin):estDur(PF.sport,PF.distKm,PF.elev,PF.intensity)||num(PF.durMin)||null;if(!d)return null;
+  return Object.assign(customItem(PF.date,{sport:PF.sport,title:PF.title,durMin:d,intensity:PF.intensity,distKm:PF.distKm,elev:PF.elev}),{date:PF.date})}
+function pfFuelHTML(){const it=pfItem();if(!it)return`<div class="small muted">🍌 Gib Distanz oder Dauer ein – dann bekommst du hier Dauer-Schätzung und Verpflegungsplan.</div>`;
+  const est=!PF.durManual&&PF.distKm?`<div class="small"><b>⏱ Geschätzt: ${fmtDur(it.durMin)}</b> <span class="muted">· ~${it.tss} Belastungspunkte</span></div>`:`<div class="small"><b>⏱ ${fmtDur(it.durMin)}</b> <span class="muted">· ~${it.tss} Belastungspunkte</span></div>`;
+  return est+fuelHTML(it).replace('<h4>','<h4 style="margin:10px 0 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;opacity:.75">')}
+function updPF(){const e=$('#pfFuel');if(e)e.innerHTML=pfFuelHTML()}
 let MF=null;
 function openMorning(k){k=k||ymd(today());const d=S.daily[k]||{};MF=Object.assign({k,sh:d.sleepMin?Math.floor(d.sleepMin/60):'',sm:d.sleepMin?d.sleepMin%60:'',sleepScore:d.sleepScore||'',rhr:d.rhr||'',hrv:d.hrv||'',weight:d.weight||'',legs:d.legs||0,energy:d.energy||0});renderMorning()}
 function renderMorning(){const o=k=>MF.ocr&&MF.ocr.includes(k)?'ocr':'',fc=(f)=>`<div class="faces" data-mf="${f}">${['😫','😕','😐','🙂','😃'].map((e,i)=>`<button data-v="${i+1}" class="${MF[f]===i+1?'on':''}">${e}</button>`).join('')}</div>`;
@@ -1619,24 +1643,137 @@ function icsFold(line){const out=[];let cur='',len=0;for(const ch of line){const
 function buildIcs(items,opt){const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VELOX//Trainingscoach//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:VELOX Training'];
   items.forEach(p=>{const d=p.date.replace(/-/g,''),e=ymd(addD(parse(p.date),1)).replace(/-/g,''),c=wxOk()?coachWx(p):null;
-    const desc=[p.short,'',`Dauer: ~${fmtDur(p.durMin)}${p.distKm?' · '+fmtKm(p.distKm)+' km':''} · Belastung ~${p.tss} Punkte`,'','Ablauf:',stepsText(p),p.peak?'\nWichtigster Moment: '+p.peak:'',p.cues?.length?'\nTipps:\n'+p.cues.map(x=>'• '+x).join('\n'):'',c?`\nWetter (Stand Export): ${c.title} – ${c.text}`:'','\nWenn\'s nicht läuft: '+(p.alt||'Kürzen oder locker laufen.'),'\n– geplant von VELOX'].filter(x=>x!=='').join('\n');
+    const desc=[p.short,'',`Dauer: ~${fmtDur(p.durMin)}${p.distKm?' · '+fmtKm(p.distKm)+' km':''} · Belastung ~${p.tss} Punkte`,'','Ablauf:',stepsText(p),p.peak?'\nWichtigster Moment: '+p.peak:'',p.cues?.length?'\nTipps:\n'+p.cues.map(x=>'• '+x).join('\n'):'',c?`\nWetter (Stand Export): ${c.title} – ${c.text}`:'',fuelText(p),'\nWenn\'s nicht läuft: '+(p.alt||'Kürzen oder locker laufen.'),'\n– geplant von VELOX'].filter(x=>x!=='').join('\n');
     L.push('BEGIN:VEVENT',`UID:velox-${p.date}-${p.role||'x'}@velox.app`,`DTSTAMP:${now}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${e}`,
       icsFold('SUMMARY:'+icsEsc(`${SP_EMO[p.sport]||'⚡'} ${p.title}${p.hard?' ⭐':''}`)),icsFold('DESCRIPTION:'+icsEsc(desc)),'TRANSP:TRANSPARENT','CATEGORIES:Training');
     if(opt.alarm)L.push('BEGIN:VALARM','ACTION:DISPLAY',icsFold('DESCRIPTION:'+icsEsc('Heute: '+p.title)),`TRIGGER;RELATED=START:PT${opt.alarm}H`,'END:VALARM');
     L.push('END:VEVENT');S.calExp[p.date]=p.title});
   L.push('END:VCALENDAR');save(true);return L.join('\r\n')+'\r\n'}
-let ICS={range:7,alarm:7};
-function openIcs(){const P=plan(),end=ymd(addD(today(),ICS.range)),its=P.filter(p=>p.date<end);
-  openSheet(`${sheetHead('In iPhone-Kalender')}<div class="small muted" style="margin-top:4px">Als <b>Ganztagstermine</b> – du schiebst sie im Kalender einfach dorthin, wo es passt (Mittagspause, abends …).</div>
-  <div class="field"><label>Zeitraum</label><div class="chips">${[[7,'Nächste 7 Tage'],[14,'14 Tage'],[21,'3 Wochen']].map(([v,l])=>`<button class="chip ${ICS.range===v?'on':''}" data-act="icsRange" data-k="${v}">${l}</button>`).join('')}</div></div>
+let ICS={range:14,alarm:7,sel:null};
+function openIcs(pre){const st=$('#ov').classList.contains('on')?$('#sheet').scrollTop:0;setTimeout(()=>{$('#sheet').scrollTop=st},0);const P=plan(),end=ymd(addD(today(),ICS.range)),its=P.filter(p=>p.date<end);
+  if(pre)ICS.sel=new Set([pre]);if(!ICS.sel)ICS.sel=new Set(its.length?[its[0].date]:[]);
+  const n=its.filter(p=>ICS.sel.has(p.date)).length,all=its.length&&its.every(p=>ICS.sel.has(p.date));
+  openSheet(`${sheetHead('In iPhone-Kalender')}<div class="small muted" style="margin-top:4px">Wähle die Trainings aus, die du übernehmen willst. Sie kommen als <b>Ganztagstermine</b> – du schiebst sie im Kalender dorthin, wo es passt.</div>
+  <div class="field"><label>Zeitraum anzeigen</label><div class="chips">${[[7,'7 Tage'],[14,'14 Tage'],[21,'3 Wochen']].map(([v,l])=>`<button class="chip ${ICS.range===v?'on':''}" data-act="icsRange" data-k="${v}">${l}</button>`).join('')}</div></div>
   <div class="field"><label>Erinnerung am Trainingstag</label><div class="chips">${[[0,'Keine'],[7,'7 Uhr'],[9,'9 Uhr'],[12,'12 Uhr']].map(([v,l])=>`<button class="chip ${ICS.alarm===v?'on':''}" data-act="icsAlarm" data-k="${v}">${l}</button>`).join('')}</div></div>
-  <div class="card list">${its.map(p=>`<div class="item" style="cursor:default">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ganztägig${S.calExp[p.date]?(S.calExp[p.date]===p.title?' · schon exportiert':' · <b style="color:var(--warn)">geändert</b>'):''}</div></div></div>`).join('')||'<div class="empty">Keine Einheiten geplant</div>'}</div>
-  <button class="btn acc full" style="margin-top:12px;padding:15px" data-act="icsGo" ${its.length?'':'disabled'}>📅 ${its.length} Termine exportieren</button>
-  <div class="tiny muted" style="margin-top:10px">Tipp: Wenn sich der Plan ändert, zeigt VELOX dir das hier und im Tag an. Alte Termine im Kalender dann einfach löschen oder anpassen – iOS überschreibt importierte Termine nicht automatisch.</div>`)}
+  <div class="row between" style="margin:4px 2px 8px"><span class="lbl">Trainings</span><a data-act="icsAll" style="color:var(--accent);font-weight:800;font-size:13px;cursor:pointer">${all?'Keine':'Alle'} auswählen</a></div>
+  <div class="card list">${its.map(p=>{const on=ICS.sel.has(p.date);return`<div class="item" data-act="icsTog" data-k="${p.date}">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ganztägig${S.calExp[p.date]?(S.calExp[p.date]===p.title?' · schon exportiert':' · <b style="color:var(--warn)">geändert</b>'):''}</div></div><span style="width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:900;${on?'background:var(--accent);color:var(--accentText)':'border:2px solid var(--muted)'}">${on?'✓':''}</span></div>`}).join('')||'<div class="empty">Keine Einheiten geplant</div>'}</div>
+  <button class="btn acc full" style="margin-top:12px;padding:15px" data-act="icsGo" ${n?'':'disabled style="margin-top:12px;padding:15px;opacity:.5"'}>📅 ${n===1?'1 Training':n+' Trainings'} exportieren</button>
+  <div class="tiny muted" style="margin-top:10px">Ändert sich der Plan, zeigt VELOX dir das hier und unter „Für dich“. iOS überschreibt importierte Termine nicht automatisch – alten Termin dann im Kalender löschen.</div>`)}
 function deliverIcs(ics,name){const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   if(isIOS){const url='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);const w=window.open(url,'_blank');if(!w)location.href=url;return}
   const b=new Blob([ics],{type:'text/calendar'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
 function icsPlanChanged(){const P=plan();return Object.entries(S.calExp).filter(([k,t])=>k>=ymd(today())&&(P.find(p=>p.date===k)?.title||'—')!==t).length}
+
+/* =====================================================================
+   HALBMARATHON-PROGNOSE
+   ===================================================================== */
+const fmtHM=v=>{v=Math.round(v/60);return Math.floor(v/60)+':'+pad(v%60)};
+function hmForecast(){const cur=hmPred();if(!cur)return null;const t0=today(),ws=weekStart(t0),rd=S.settings.raceDate?parse(S.settings.raceDate):null;
+  const W=rd?Math.max(0,Math.round(dBetween(t0,rd)/7)):0,tg=parseTime(S.settings.targetTime);
+  // Verlauf: Prognose am Ende jeder der letzten 12 Wochen
+  const hist=[];for(let i=11;i>=0;i--){const e=addD(ws,-7*i+6),k=ymd(e>t0?t0:e),p=hmPred(42,k);hist.push(p?p.t:null)}
+  if(hist[11]==null)hist[11]=cur.t;
+  // Konstanz der letzten 4 Wochen
+  const lim=ymd(addD(t0,-28)),runs=S.sessions.filter(s=>s.sport==='run'&&s.date>=lim&&s.date<=ymd(t0)),rpw=runs.length/4,kpw=sum(runs,s=>s.distKm||0)/4;
+  let r=.0025+.001*Math.min(rpw,3.5);if(kpw<12)r*=.75;if(kpw>=25)r*=1.15;
+  const capGain=.07,proj=f=>{const out=[];for(let w=0;w<=W;w++){const cf=capGain*f,g=cf*(1-Math.exp(-r*f*w/cf));let t=cur.t*(1-g);if(w===W&&W>0)t*=.985;out.push(t)}return out};
+  const mid=proj(1),opt=proj(1.4),con=proj(.5);
+  // beobachteter Trend (s/Woche) aus den letzten 8 Wochen
+  const hv=hist.map((v,i)=>[i,v]).slice(4).filter(x=>x[1]!=null);let trend=null;
+  if(hv.length>=3&&hv[hv.length-1][0]-hv[0][0]>=3){const n=hv.length,mx=avg(hv.map(x=>x[0])),my=avg(hv.map(x=>x[1]));trend=sum(hv,x=>(x[0]-mx)*(x[1]-my))/sum(hv,x=>(x[0]-mx)**2)}
+  const end=mid[mid.length-1],endO=opt[opt.length-1],endC=con[con.length-1];
+  let verdict=null;if(tg){verdict=tg>=endC?['good','Sehr wahrscheinlich','Selbst mit wenig Fortschritt schaffst du das. Du könntest dein Ziel sogar etwas schärfer stellen.']:tg>=end?['good','Realistisch','Wenn du weiter so dranbleibst wie bisher, passt das.']:tg>=endO?['warn','Ambitioniert','Machbar, braucht aber konstante 3–4 Läufe pro Woche ohne längere Pausen.']:['bad','Sehr ambitioniert','Aus heutiger Sicht schwer. Ein Zwischenziel wäre sinnvoll – oder das Ziel nach dem nächsten 5-km-Test neu bewerten.']}
+  const need=tg&&W>0&&tg<cur.t?1-Math.pow(tg/cur.t,1/W):0;
+  return{cur,W,tg,hist,mid,opt,con,end,endO,endC,trend,verdict,need,r,rpw,kpw}}
+function fcChart(F){const lab=[],H=[],M=[],O=[],C=[];const ws=weekStart(today());
+  for(let i=11;i>=0;i--){lab.push(i?'−'+i+' W':'Heute');H.push(F.hist[11-i]);M.push(i?null:F.mid[0]);O.push(i?null:F.opt[0]);C.push(i?null:F.con[0])}
+  for(let w=1;w<=F.W;w++){lab.push(w===F.W?'🏁':`+${w}`);H.push(null);M.push(F.mid[w]);O.push(F.opt[w]);C.push(F.con[w])}
+  // Label-Ausdünnung: Monatskürzel
+  const L=lab.map((l,i)=>fmtDate(ymd(addD(ws,7*(i-11))),{month:'short'}));
+  return lineChart([{v:O,c:'var(--good)',w:1.3,dash:true},{v:C,c:'var(--warn)',w:1.3,dash:true},{v:M,c:'var(--accent)',w:2.6,last:true},{v:H,c:sc('run'),dots:true,line:true,w:1.8}],L,{fmt:fmtHM,h:190,hline:F.tg||null})}
+function fcCard(){const F=hmForecast();if(!F)return`<div class="card fade"><div class="lbl">${ic('flag')} Halbmarathon-Prognose</div><div class="empty">${ic('run')}Trag einen Lauf ab 3 km oder deine 5-km-Zeit im Setup ein – dann rechnet VELOX deine Zielzeit hoch.</div></div>`;
+  return`<div class="card fade" data-act="forecast" style="cursor:pointer"><div class="row between"><div class="lbl">${ic('flag')} Halbmarathon-Prognose${Q('prognose')}</div>${ic('chev','muted')}</div>
+    <div class="stats" style="margin-top:8px"><div class="stat"><b>${fmtTime(F.cur.t)}</b><span>Heute</span></div><div class="stat"><b>${F.W?fmtTime(F.end):'–'}</b><span>Am Renntag</span></div><div class="stat"><b>${F.tg?fmtTime(F.tg):'–'}</b><span>Ziel</span></div></div>
+    ${fcChart(F)}
+    <div class="legend"><span><i style="background:${sc('run')}"></i>Bisher</span><span><i style="background:var(--accent)"></i>Erwartet</span><span><i style="background:var(--good)"></i>Wenn's super läuft</span><span><i style="background:var(--warn)"></i>Mit Pausen</span>${F.tg?'<span><i style="background:var(--muted)"></i>Ziel</span>':''}</div>
+    ${F.verdict?`<div class="small" style="margin-top:8px"><b style="color:var(--${F.verdict[0]})">${F.verdict[1]}:</b> ${F.verdict[2]}</div>`:''}</div>`}
+function openForecast(){const F=hmForecast();if(!F){toast('Noch keine Laufdaten');return}const st=S.settings,pace=(F.tg||F.end)/RD(),src=F.cur.from;
+  const eq=d=>F.cur.t*Math.pow(d/RD(),1.06);
+  const splits=[5,10,15,20,RD()].map(k=>`<div class="kv"><span>${k===RD()?'Ziel':k+' km'}</span><b>${fmtTime(pace*k)}</b></div>`).join('');
+  openSheet(`${sheetHead('Halbmarathon-Prognose')}
+  <div class="card" style="margin-top:6px"><div class="stats"><div class="stat"><b>${fmtTime(F.cur.t)}</b><span>Heute</span></div><div class="stat"><b>${F.W?fmtTime(F.end):'–'}</b><span>Renntag (erwartet)</span></div><div class="stat"><b>${F.tg?fmtTime(F.tg):'–'}</b><span>Ziel</span></div></div>
+    ${fcChart(F)}
+    <div class="small muted">Spanne am Renntag: <b>${fmtTime(F.endO)}</b> (wenn alles gut läuft) bis <b>${fmtTime(F.endC)}</b> (mit Pausen). Noch ${F.W} Wochen.</div></div>
+  ${F.verdict?`<h4>🎯 Dein Ziel</h4><div class="small"><b style="color:var(--${F.verdict[0]})">${F.verdict[1]}.</b> ${F.verdict[2]}${F.need?` Dafür musst du im Schnitt ca. <b>${fmtN(F.need*100,1)} % pro Woche</b> schneller werden (≈ ${Math.round(F.cur.t*F.need)} s).`:''}</div>`:`<h4>🎯 Dein Ziel</h4><div class="small">Noch keine Zielzeit gesetzt. Tipp: Starte mit <b>${fmtTime(Math.ceil(F.end/60)*60)}</b> – das ist aus heutiger Sicht realistisch. <button class="btn sm" data-act="setTargetFc" data-k="${Math.ceil(F.end/60)*60}" style="margin-top:6px">Als Ziel übernehmen</button></div>`}
+  <h4>📈 Trend</h4><div class="small">${F.trend==null?'Für einen Trend brauche ich Läufe über mindestens 3–4 Wochen. Bis dahin rechnet VELOX mit typischen Fortschritten für Wiedereinsteiger.':F.trend<-3?`Du wirst gerade ca. <b>${Math.round(-F.trend)} s pro Woche</b> schneller. 💪`:F.trend>3?`Die Prognose ist zuletzt ca. ${Math.round(F.trend)} s pro Woche langsamer geworden – meist wegen Pausen oder nur lockerer Läufe. Ein 5-km-Test bringt Klarheit.`:'Deine Prognose ist zuletzt stabil.'}
+    <br>Letzte 4 Wochen: <b>${fmtN(F.rpw,1)} Läufe</b> und <b>${fmtN(F.kpw,1)} km</b> pro Woche. ${F.rpw<3?'Mehr Konstanz (3 Läufe/Woche) ist der größte Hebel.':'Gute Konstanz – weiter so.'}</div>
+  <h4>⏱ Renn-Pace${F.tg?' für dein Ziel':''}</h4><div class="small">Gleichmäßig <b>${fmtPace(pace)}</b> pro km.</div><div style="margin-top:4px">${splits}</div>
+  <h4>🔁 Entspricht heute etwa</h4><div>${[[5,'5 km'],[10,'10 km']].map(([d,n])=>`<div class="kv"><span>${n}</span><b>${fmtTime(eq(d))}</b></div>`).join('')}</div>
+  <h4>🔎 Woher kommt die Zahl?</h4><div class="small muted">${src?`Basis: dein ${src.kind==='race'?'Test/Wettkampf':'Lauf'} vom ${fmtDate(src.date,{day:'numeric',month:'short'})} (${fmtKm(src.distKm)} km in ${fmtTime(src.durMin*60)}), hochgerechnet auf 21,1 km${src.kind==='race'?'':' mit 3 % Renntag-Bonus'}. `:'Basis: deine 5-km-Zeit aus dem Setup. '}Die Kurve nimmt an, dass du dich jede Woche ein kleines Stück verbesserst – je regelmäßiger du läufst, desto steiler. Bessere Daten = bessere Prognose: alle 6–8 Wochen ein 5-km-Test.</div>`)}
+
+/* =====================================================================
+   VERPFLEGUNGS-COACH
+   ===================================================================== */
+function seasonTemp(){const m=today().getMonth();return[3,3,7,11,15,18,20,20,16,11,7,4][m]}
+function fuelPlan(p){if(!p||!p.durMin)return null;const F=S.settings.fuel,cat=SPORTS[p.sport]?.cat,bike=cat==='bike',run=cat==='run',indoor=p.sport==='zwift';if(!bike&&!run&&p.sport!=='swim')return null;
+  const h=p.durMin/60,IF=p.IF||.7,kg=weightE()||75,wc=wxOk()?coachWx(p):null,temp=indoor?20:(wc?wc.feel:seasonTemp()),hardish=IF>=.82;
+  const r={h,kg,temp,indoor,before:[],after:[],pack:[],tl:[],notes:[]};
+  // Kohlenhydrate pro Stunde
+  let cph=h<1?0:h<1.5?(hardish?30:20):h<2.5?(hardish?60:45):(hardish?80:60);if(run)cph=Math.min(cph,h>2.5?70:60);if(p.sport==='swim')cph=0;
+  r.cph=cph;r.carbs=Math.round(cph*Math.max(0,h-.25));
+  // Flüssigkeit & Natrium
+  let ml=temp<10?450:temp<20?550:temp<25?700:850;if(indoor)ml+=250;if(hardish)ml+=100;if(run)ml-=100;r.mlh=ml;r.fluid=h<.75?0:Math.round(ml*h/50)*50;
+  r.naL=(h>=1.5||temp>=22||indoor)?(temp>=25||indoor?700:500):0;
+  if(h<1&&!hardish){r.short=true;r.summary=indoor?`💧 ${Math.round(Math.max(500,ml*h)/50)*50} ml Wasser bereitstellen`:'💧 Wasser reicht – vorher normal essen';
+    r.before.push('Normal essen, nicht direkt vorher schwer.');if(indoor)r.pack.push(`${Math.round(Math.max(500,ml*h)/50)*50} ml Wasser`);r.info=`Unter 1 h locker – keine Extra-Kohlenhydrate nötig`;return r}
+  // Flaschen
+  const cont=bike?F.bottle:F.flask;let nC=r.fluid?Math.max(1,Math.ceil(r.fluid/cont)):0;const carry=bike?F.holders:(r.fluid>300?1:0);if(run&&nC>1){r.notes.push(`Rest (~${Math.round((r.fluid-cont)/50)*50} ml) vorher/nachher trinken – oder Runde am Auto/zu Hause vorbeiplanen.`);nC=1}if(run&&h<1.25)nC=0;
+  let carbBottle=0,maltoPer=0;
+  if(F.malto&&nC&&r.carbs>0){const share=r.carbs<=40?1:run?.35:.5,maxPer=cont*.11;maltoPer=Math.round(Math.min(maxPer,r.carbs*share/nC)/.95/5)*5;if(maltoPer<15)maltoPer=r.carbs<=40?Math.min(15,Math.round(maxPer/5)*5):0;carbBottle=Math.round(maltoPer*.95*nC)}
+  const elecPer=F.elec&&r.naL?Math.max(1,Math.round(r.naL*cont/1000/(F.elecMg||500))):0;
+  let rest=Math.max(0,r.carbs-carbBottle);if(rest<12)rest=0;const solids=[];
+  const add=(n,kh,label)=>{const c=Math.max(0,Math.ceil(n));if(c)solids.push([c,kh,label]);return c*kh};
+  if(rest>0){
+    if(run){if(F.gels)rest-=add(rest/F.gelKH,F.gelKH,'Gel');else if(F.dates)rest-=add(rest/F.dateKH,F.dateKH,'Datteln')}
+    else{const gs=hardish?.6:.35;let g=0;if(F.gels)g=add(rest*gs/F.gelKH,F.gelKH,'Gel');rest-=g;
+      if(rest>0&&F.dates)rest-=add(rest/F.dateKH,F.dateKH,'Datteln');if(rest>0&&F.bars)rest-=add(rest/F.barKH,F.barKH,'Riegel');if(rest>0&&F.banana)rest-=add(rest/25,25,'Banane');if(rest>0&&F.gels)add(rest/F.gelKH,F.gelKH,'Gel')}}
+  // merge same labels
+  const m={};solids.forEach(([c,kh,l])=>{m[l]=m[l]||{c:0,kh};m[l].c+=c});
+  // Packliste
+  if(nC)r.pack.push(`${nC}× ${cont} ml${maltoPer?` mit ${nC>1?"je ":""}${maltoPer} g Maltodextrin`:''}${elecPer?` + ${elecPer} ${F.elecUnit}${elecPer>1&&F.elecUnit==='Tab'?'s':''} Elektrolyt`:''}`);
+  Object.entries(m).forEach(([l,v])=>r.pack.push(`${v.c} ${l==='Gel'?(v.c>1?'Gels':'Gel'):l==='Datteln'?(v.c>1?'Datteln':'Dattel'):l==='Riegel'?'Riegel':(v.c>1?'Bananen':'Banane')}`));
+  if(F.gels&&h>=2&&r.carbs&&!run)r.pack.push('+1 Gel als Notreserve');
+  if(nC>carry&&carry)r.notes.push(`Du brauchst ${nC} Füllungen, hast aber ${carry} Halter → ${nC-carry}× unterwegs nachfüllen (Tanke, Bäcker, Friedhof).`);
+  if(!bike&&nC&&h<1.25)r.pack.splice(0,1,`${Math.round(r.fluid/50)*50} ml Wasser vorher/nachher – mitnehmen optional`);
+  // Zeitplan
+  const iv=30,startM=bike?30:40,endM=p.durMin-15;const slots=[];for(let t=startM;t<=endM;t+=iv)slots.push(t);const nItems=Object.entries(m).reduce((a,[l,v])=>a+v.c,0);
+  const q=[];Object.entries(m).forEach(([l,v])=>{const per=l==='Datteln'&&nItems>slots.length?2:1;for(let i=0;i<v.c;i+=per)q.push(l==='Datteln'?(Math.min(per,v.c-i)===2?'2 Datteln':'1 Dattel'):l==='Gel'?'1 Gel':l==='Riegel'?'½ Riegel':'½ Banane')});
+  if(q.length&&slots.length){const order=[];const g=q.filter(x=>x.includes('Gel')),o=q.filter(x=>!x.includes('Gel'));while(o.length||g.length){if(o.length)order.push(o.shift());if(g.length&&(order.length%2===0||!o.length))order.push(g.shift())}
+    slots.forEach((t,i)=>{const it=order[i];if(it)r.tl.push([t,it])});const left=order.slice(slots.length);if(left.length&&r.tl.length)r.tl[r.tl.length-1][1]+=' + '+left.join(' + ')}
+  if(nC)r.tl.unshift([10,`trinken: alle 15 min ein paar Schlucke (~${Math.round(ml/4/10)*10} ml)`]);
+  // Vorher / Nachher
+  if(h>=2.5)r.before.push(`Am Vorabend kohlenhydratreich essen (Nudeln, Reis, Kartoffeln).`);
+  if(h>=1.5)r.before.push(`2–3 h vorher: ~${Math.round(kg*1.5/10)*10} g Kohlenhydrate (z. B. Haferflocken mit Banane & Honig, Brötchen mit Marmelade).`);else r.before.push('1–2 h vorher eine normale, leichte Mahlzeit.');
+  if(hardish||h>=2)r.before.push('15–30 min vorher: 2 Datteln oder ½ Banane, 300–500 ml trinken.');
+  if(h>=1||hardish)r.after.push(`Innerhalb 1 h: ~${Math.round(kg*1/10)*10} g Kohlenhydrate + 25 g Eiweiß (z. B. Skyr mit Haferflocken, Reis mit Hähnchen, Kakao).`);
+  if(r.fluid)r.after.push(`~${Math.round(r.fluid*.5/50)*50} ml nachtrinken – mit etwas Salz oder einem Elektrolyt${F.elecUnit==='Tab'?'-Tab':''}.`);
+  r.summary=`🎒 ${r.pack.slice(0,3).join(' · ')}`;
+  r.info=`${r.cph?`${r.cph} g Kohlenhydrate/h`:'keine Kohlenhydrate nötig'} · ~${Math.round(ml/50)*50} ml/h${r.naL?` · ~${r.naL} mg Natrium/l`:''}${wc?` · ${Math.round(temp)}° gefühlt`:indoor?' · Indoor':''}`;
+  return r}
+function fuelHTML(p){const f=fuelPlan(p);if(!f)return p.fuel?`<h4>${ic('coffee')} Essen & Trinken</h4><div class="small">${esc(p.fuel)}</div>`:'';
+  return`<h4>🍌 Verpflegung</h4><div class="fuel small"><div style="opacity:.8">${f.info}</div>
+  ${f.pack.length?`<div style="margin-top:6px;font-weight:800">Mitnehmen:</div><div class="pack">${f.pack.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
+  ${f.tl.length?`<div style="font-weight:800">Unterwegs:</div><div class="tl">${f.tl.map(([t,x])=>`<div><b>${fmtClock(t)}</b><span>${esc(x)}</span></div>`).join('')}</div>`:''}
+  ${f.notes.map(n=>`<div style="margin-top:6px">⚠️ ${esc(n)}</div>`).join('')}
+  <div style="margin-top:8px;font-weight:800">Vorher:</div><ul style="margin:2px 0">${f.before.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+  ${f.after.length?`<div style="font-weight:800">Danach:</div><ul style="margin:2px 0">${f.after.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`}
+function fuelText(p){const f=fuelPlan(p);if(!f)return'';return`\nVerpflegung (${f.info}):\n${f.pack.map(x=>'• '+x).join('\n')}${f.tl.length?'\nUnterwegs: '+f.tl.map(([t,x])=>fmtClock(t)+' '+x).join(' · '):''}`}
+// Dauer-Schätzung für eigene Einheiten
+function estDur(sport,km,hm,int){km=num(km)||0;hm=num(hm)||0;if(!km)return null;const cat=SPORTS[sport]?.cat;
+  if(cat==='bike'){const v=sport==='zwift'?30:int==='hart'?30:int==='lang'?27:26;return Math.round((km/v+hm*.0004)*60)}
+  if(cat==='run'){const P=paces(),pace=int==='hart'?P.thr*1.03:P.thr*1.25;return Math.round(km*pace/60+hm/100)}
+  if(sport==='swim')return Math.round(km*25);return null}
 
 /* =====================================================================
    HEUTE ERLEDIGT
@@ -1887,7 +2024,8 @@ const HELP={
   rhr:'<b>Ruheherzfrequenz</b> der letzten Nacht. Health-App → Herz → Ruheherzfrequenz.',
   hrv:'<b>HRV in ms</b>: Health-App → Herz → Herzfrequenzvariabilität, Garmin → HRV-Status.',
   gName:'Modellname, z. B. <b>Nike Pegasus 41</b>.',gStart:'Bereits gelaufene <b>km</b> – Strava: Profil → Ausrüstung. Ab jetzt zählt VELOX automatisch weiter.',gLim:'Laufschuhe halten meist <b>600–800 km</b>. VELOX erinnert dich vorher.',
-  title:'Kurzer Name, z. B. „Parkrun“ oder „Gruppenausfahrt“.',durMin:'Geplante <b>Dauer in Minuten</b>.'
+  title:'Kurzer Name, z. B. „Parkrun“ oder „Gruppenausfahrt“. Leer lassen = automatisch aus Distanz & Höhenmetern.',
+  distKmP:'Geplante Strecke in km – VELOX schätzt daraus Dauer und Verpflegung.',durMin:'Geplante <b>Dauer in Minuten</b>.'
 };
 function helpKey(el){const d=el.dataset;if(d.f)return d.f==='hrMax'?'hrMaxS':d.f;return d.set||d.m||d.w||d.sync||d.pf||el.id||null}
 function remHelp(){$$('.hint').forEach(h=>h.remove())}
@@ -1909,6 +2047,7 @@ function bind(){const A=$('#app');
   $$('[data-tabgo]',A).forEach(e=>e.onclick=()=>go(e.dataset.tabgo));
   $$('[data-range]',A).forEach(e=>e.onclick=()=>{RANGE=+e.dataset.range;render()});
   $$('[data-set]',A).forEach(e=>e.onchange=()=>{let v=e.value;const k=e.dataset.set;if(k==='ftp'){v=num(v)||S.settings.ftp;S.settings.ftpDate=S.settings.ftpDate||ymd(today())}if(k==='weight')S.settings.weightDate=ymd(today());if(k==='raceDate')S.settings.raceDateOk=true;S.settings[k]=v;S.meta[k]=ymd(today());if(k==='ftp')S.settings.ftpDate=ymd(today());save();render()});
+  $$('[data-fuel]',A).forEach(e=>e.onchange=()=>{const v=num(e.value);if(v)S.settings.fuel[e.dataset.fuel]=v;save();render()});
   $$('[data-sync]',A).forEach(e=>e.onchange=()=>{S.settings.sync[e.dataset.sync]=e.value.trim();if(e.dataset.sync==='pass')S.settings.sync.salt=S.settings.sync.gistId?S.settings.sync.salt:'';save(true)});
   $$('[data-fit]',A).forEach(e=>e.onclick=()=>{S.settings.startFit=+e.dataset.fit;save();render()});
   $$('[data-sex]',A).forEach(e=>e.onclick=()=>{S.settings.sex=e.dataset.sex;save();render()});
@@ -1928,7 +2067,7 @@ function bindSheet(){const sh=$('#sheet');
   $$('[data-done]',sh).forEach(e=>e.onclick=()=>doneFromPlan(e.dataset.done));
   $$('[data-newday]',sh).forEach(e=>e.onclick=()=>openForm({date:e.dataset.newday}));
   $$('[data-psp]',sh).forEach(e=>e.onclick=()=>{collectPF();PF.sport=e.dataset.psp;renderPlanOwn()});
-  $$('[data-int]',sh).forEach(e=>e.onclick=()=>{PF.intensity=e.dataset.int;$$('[data-int]',sh).forEach(x=>x.classList.toggle('on',x===e))});
+  $$('[data-int]',sh).forEach(e=>e.onclick=()=>{PF.intensity=e.dataset.int;$$('[data-int]',sh).forEach(x=>x.classList.toggle('on',x===e));collectPF();updPF()});
   $$('[data-mf]',sh).forEach(f=>$$('button',f).forEach(b=>b.onclick=()=>{MF[f.dataset.mf]=+b.dataset.v;$$('button',f).forEach(x=>x.classList.toggle('on',x===b))}));
   $$('[data-wc]',sh).forEach(e=>e.onclick=()=>{collectWizard();let v=e.dataset.v;if(['startFit','longDay'].includes(e.dataset.wc))v=+v;WZ.d[e.dataset.wc]=v;renderWizard()});
   $$('[data-wd]',sh).forEach(e=>e.onclick=()=>{collectWizard();const x=+e.dataset.wd,a=WZ.d.days,i=a.indexOf(x);i>=0?a.splice(i,1):a.push(x);renderWizard()});
@@ -1945,10 +2084,17 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
-    case'icsSheet':openIcs();break;
+    case'forecast':openForecast();break;
+    case'setTargetFc':S.settings.targetTime=fmtTime(+k);save();_cache={};openForecast();render();toast('Zielzeit gesetzt ✓');break;
+    case'fuelTog':S.settings.fuel[k]=!S.settings.fuel[k];save();render();break;
+    case'fuelUnit':S.settings.fuel.elecUnit=k;save();render();break;
+    case'icsSheet':ICS.sel=null;openIcs();break;
+    case'icsTog':{ICS.sel.has(k)?ICS.sel.delete(k):ICS.sel.add(k);const on=ICS.sel.has(k),sp=el.querySelector('span:last-child');sp.style.cssText='width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:900;'+(on?'background:var(--accent);color:var(--accentText)':'border:2px solid var(--muted)');sp.textContent=on?'✓':'';
+      const end=ymd(addD(today(),ICS.range)),n=plan().filter(p=>p.date<end&&ICS.sel.has(p.date)).length,b=$('#sheet [data-act=icsGo]');b.disabled=!n;b.style.opacity=n?1:.5;b.textContent='📅 '+(n===1?'1 Training':n+' Trainings')+' exportieren';break}
+    case'icsAll':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end);const all=its.every(p=>ICS.sel.has(p.date));ICS.sel=new Set(all?[]:its.map(p=>p.date));openIcs();break}
     case'icsRange':ICS.range=+k;openIcs();break;
     case'icsAlarm':ICS.alarm=+k;openIcs();break;
-    case'icsGo':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end);deliverIcs(buildIcs(its,{alarm:ICS.alarm}),'velox-training.ics');closeSheet();render();toast('📅 '+its.length+' Termine – im Dialog „Alle hinzufügen“ tippen',4000);break}
+    case'icsGo':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end&&ICS.sel.has(p.date));if(!its.length)return;deliverIcs(buildIcs(its,{alarm:ICS.alarm}),'velox-training.ics');closeSheet();render();toast('📅 '+its.length+' Termine – im Dialog „Alle hinzufügen“ tippen',4000);break}
     case'icsOne':{const p=plan().find(x=>x.date===k);if(p){deliverIcs(buildIcs([p],{alarm:ICS.alarm}),'velox-'+k+'.ics');toast('📅 Termin exportiert',2500)}break}
     case'wxIn':S.wxSwap[k]='in';save();closeSheet();render();toast('🚲 Auf die Rolle verlegt');break;
     case'wxOut':S.wxSwap[k]='out';save();closeSheet();render();toast('☀️ Ab nach draußen!');break;
@@ -1989,7 +2135,7 @@ function act(a,el){const k=el?.dataset?.k;
     case'shotSleep':collectMorning();pickShot('sleep');break;
     case'delSess':if(confirmInline(el,'Wirklich löschen?')){S.deleted.push(F.id);S.sessions=S.sessions.filter(x=>x.id!==F.id);save();closeSheet();render();toast('Gelöscht')}break;
     case'planOwn':openPlanOwn(k);break;
-    case'savePlanOwn':collectPF();if(!PF.date){toast('Datum fehlt');return}S.overrides[PF.date]={kind:'custom',sport:PF.sport,title:PF.title||SPORTS[PF.sport].n,durMin:num(PF.durMin)||45,intensity:PF.intensity,note:PF.note};save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
+    case'savePlanOwn':{collectPF();if(!PF.date){toast('Datum fehlt');return}const it=pfItem();const km=num(PF.distKm),hm=num(PF.elev);const ttl=PF.title||(km?`${fmtKm(km)} km ${SPORTS[PF.sport].cat==='bike'?'Radtour':SPORTS[PF.sport].n}${hm?' · '+hm+' hm':''}`:SPORTS[PF.sport].n);S.overrides[PF.date]={kind:'custom',sport:PF.sport,title:ttl,durMin:it?it.durMin:(num(PF.durMin)||45),intensity:PF.intensity,note:PF.note,distKm:km||'',elev:hm||''};}save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
     case'rest':S.overrides[k]={kind:'rest'};save();closeSheet();render();toast(ic('bed')+' Ruhetag – Plan neu verteilt');break;
     case'easier':{const p=plan().find(x=>x.date===k);S.overrides[k]={kind:'custom',sport:p?.sport==='run'?'run':'zwift',title:p?.sport==='run'?'Erholungslauf':'Erholungsfahrt',durMin:30,intensity:'locker',note:'Lockere Alternative statt Schlüsseleinheit'};save();closeSheet();render();toast('Lockere Alternative eingeplant');break}
     case'clearOv':delete S.overrides[k];save();closeSheet();render();toast('Coach-Plan wiederhergestellt');break;
