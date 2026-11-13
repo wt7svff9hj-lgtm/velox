@@ -252,6 +252,16 @@ table.z td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabu
 .scan{position:relative;height:6px;border-radius:3px;background:var(--card2);overflow:hidden;margin-top:10px}
 .scan span{position:absolute;inset:0;width:0;background:var(--accent);transition:width .3s}
 .hide{display:none!important}
+.wxnow{margin-top:14px;border-radius:20px;padding:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--c-ride) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--c-ride) 25%,transparent);cursor:pointer;position:relative;overflow:hidden}
+.wxnow .em{font-size:46px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))}
+.wxnow .tp{font-size:44px;font-weight:900;font-style:italic;letter-spacing:-.04em;line-height:1}
+.wxnow .sm{font-size:12.5px;color:var(--muted);font-weight:600}
+.wxnow .sum{margin-top:10px;font-size:13.5px;font-weight:700}
+.wxnow .chips{margin-top:10px}.wxnow .chip{background:color-mix(in srgb,var(--text) 8%,transparent);cursor:inherit}
+.wxnow .hrs{display:flex;gap:4px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.wxnow .hrs div{flex:1;min-width:38px;text-align:center;font-size:11px;font-weight:700;color:var(--muted)}
+.wxnow .hrs div b{display:block;color:var(--text);font-size:13px}.wxnow .hrs div span{display:block;font-size:17px;margin:2px 0}
+.wxnow .hrs div i{display:block;font-style:normal;color:var(--c-ride);font-size:10.5px}
 .wxrow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
 .wxd{background:var(--card2);border-radius:13px;padding:8px 2px;text-align:center;cursor:pointer;position:relative}
 .wxd .d{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase}.wxd .e{font-size:22px;line-height:1.3}.wxd .t{font-size:12px;font-weight:800}.wxd .r{font-size:10.5px;color:var(--c-ride);font-weight:700}
@@ -377,7 +387,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.1';
+const KEY='velox.v1',VERSION='6.3';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -502,7 +512,7 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -1006,6 +1016,7 @@ function todos(){const st=S.settings,t=ymd(today()),h=new Date().getHours(),out=
    const yk='wy'+(td.getMonth()===11?td.getFullYear():td.getFullYear()-1);if(((td.getMonth()===11&&td.getDate()>=15)||(td.getMonth()===0&&td.getDate()<=10))&&!S.seen[yk]&&S.sessions.length>=10)out.unshift({i:'trophy',t:`Dein Sportjahr ${yk.slice(2)} 🎉`,d:'Der große Jahresrückblick – alle Highlights.',a:'wrapYear'})}
   if(L.daysDiffer)out.push({i:'brain',t:'Trainingstage anpassen?',d:`Du trainierst meist ${L.days.map(d=>WD[d]).join(', ')} – soll der Plan das übernehmen?`,a:'applyDays'});
   if(pinOn()&&!bioOn()&&!S.seen.bioAsk&&location.protocol!=='file:')out.push({i:'user',t:'Face ID aktivieren?',d:'Entsperren per Blick statt PIN – antippen zum Einrichten.',a:'bioAsk'});
+  {const n=icsPlanChanged();if(n)out.push({i:'cal',t:`Plan geändert – ${n} Kalender-${n===1?'Termin':'Termine'} veraltet`,d:'VELOX hat den Plan angepasst. Antippen, um die neuen Termine zu exportieren.',a:'icsSheet'})}
   if(updAvail())out.unshift({i:'download',t:`Update verfügbar: v${updAvail()} 🚀`,d:'Neue Funktionen & Verbesserungen – deine Daten bleiben erhalten.',a:'openUpdate'});
   return out}
 function vHome(){
@@ -1020,7 +1031,7 @@ function vHome(){
   return`
   <div class="top fade"><div class="brand">${logoSVG(S.settings.theme.accent,S.settings.theme.accentText)}VELOX</div>${syncBadge()}</div>
   <div class="greet fade"><div class="hi">${ic(G.i)} ${t0.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}</div>
-    <h1>${G.t}${S.settings.name?', '+esc(S.settings.name):''} <span class="emo">${G.e}${moodEmoji()}</span></h1><div class="h1s">${subline()}</div></div>
+    <h1>${G.t}${S.settings.name?', '+esc(S.settings.name):''} <span class="emo">${G.e}${moodEmoji()}</span></h1><div class="h1s">${subline()}</div>${wxNow()}</div>
   ${td.length?`<h2>${ic('bell')} Für dich<span class="line"></span>${td.length>4?`<a data-act="allTodos">${showAllTodos?'Weniger':'Alle '+td.length} ${ic('chev')}</a>`:''}</h2><div class="card fade">${td.slice(0,showAllTodos?99:4).map(x=>`<div class="todo" data-act="${x.a}"><div class="ti">${ic(x.i)}</div><div class="grow"><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div>${ic('chev','muted')}</div>`).join('')}</div>`:''}
   ${doneCard()}
   <h2>${ic('bolt')} ${S.sessions.some(s=>s.date===tk&&s.sport!=='walk')?'Als Nächstes':'Nächstes Training'}<span class="line"></span></h2>
@@ -1069,7 +1080,7 @@ function vCal(){
   const by={};mon.forEach(s=>{by[s.sport]=by[s.sport]||{n:0,min:0,km:0,tss:0};by[s.sport].n++;by[s.sport].min+=s.durMin||0;by[s.sport].km+=s.distKm||0;by[s.sport].tss+=sessionLoad(s).tss});
   let weeks='';for(let w=0;w<6;w++){const a=addD(first,w*7);if(a>=new Date(m.getFullYear(),m.getMonth()+1,1))break;const wa=weekAgg(a),wi=weekInfo(a),pl=P.filter(p=>p.date>=ymd(a)&&p.date<ymd(addD(a,7)));
     weeks+=`<div class="kv"><span>KW ${isoWeek(a)}${wi.deload?' <span class="badge">Entl.</span>':''}</span><b>${fmtN(wa.h,1)} h · ${fmtKm(wa.run)} km · ${Math.round(wa.tss)} Pkt.${pl.length?` <span class="muted">+${sum(pl,p=>p.tss)}</span>`:''}</b></div>`}
-  return`<div class="top"><h1 style="margin:0">Kalender</h1><button class="btn sm" data-act="planOwn">${ic('plus')} Eigenes planen</button></div>
+  return`<div class="top"><h1 style="margin:0">Kalender</h1><div class="row" style="gap:6px"><button class="btn sm" data-act="icsSheet">📅 Export</button><button class="btn sm" data-act="planOwn">${ic('plus')}</button></div></div>
   <div class="row between" style="margin:14px 0 12px"><button class="btn sm" data-act="calPrev">${ic('chevl')}</button><div class="mid" style="font-style:italic;text-transform:uppercase">${MONTHS[m.getMonth()]} ${m.getFullYear()}</div><button class="btn sm" data-act="calNext">${ic('chev')}</button></div>
   <div class="calhead">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(x=>`<div>${x}</div>`).join('')}</div><div class="cal fade">${cells}</div>
   <div class="legend">${Object.keys(SPORTS).map(k=>`<span><i style="background:${sc(k)}"></i>${SPORTS[k].n}</span>`).join('')}<span><i style="background:var(--accent)"></i>Schlüsseleinheit</span><span style="opacity:.6">blass = geplant</span></div>
@@ -1424,7 +1435,7 @@ function openDay(k){
   ${pl.map(p=>`<div class="card" style="margin-top:12px;border:1px dashed ${sc(p.sport)}"><div class="row between"><span class="lbl">${p.custom?'Eigenes Training':'Geplant'} · ${SPORTS[p.sport].n}</span>${p.hard?'<span class="badge acc">⭐ wichtig</span>':''}</div>
     <div class="mid" style="margin-top:6px">${esc(p.title)}</div><div class="small muted">${esc(p.short)}</div>${profileBars(p)}
     <div class="stats"><div class="stat"><b>${fmtDur(p.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${zoneOf(p.IF)}</b><span>Tempo</span></div><div class="stat"><b>${p.tss}</b><span>Punkte${Q('belastung')}</span></div></div>
-    ${workoutDetail(p)}<div class="btnrow"><button class="btn acc" data-done="${p.date}">${ic('check')} Erledigt</button><button class="btn" data-act="rest" data-k="${k}">${ic('skip')} Ruhetag</button></div></div>`).join('')}
+    ${workoutDetail(p)}<div class="btnrow"><button class="btn acc" data-done="${p.date}">${ic('check')} Erledigt</button><button class="btn" data-act="rest" data-k="${k}">${ic('skip')} Ruhetag</button></div><button class="btn ghost full" style="margin-top:8px" data-act="icsOne" data-k="${k}">📅 In iPhone-Kalender${S.calExp[k]?(S.calExp[k]===p.title?' (schon exportiert ✓)':' (Plan geändert – neu exportieren)'):''}</button></div>`).join('')}
   ${!ss.length&&!pl.length?`<div class="card" style="margin-top:12px"><div class="empty">${ic('bed')}${o?.kind==='rest'?'Von dir als Ruhetag markiert.':isPast?'Kein Training an diesem Tag.':'Ruhetag – Erholung ist Training.'}</div></div>`:''}
   <div class="btnrow"><button class="btn" data-newday="${k}">${ic('plus')} Eintragen</button>${!isPast?`<button class="btn" data-act="planOwn" data-k="${k}">${ic('edit')} Eigenes planen</button>`:''}</div>
   ${o?`<button class="btn ghost full" style="margin-top:8px" data-act="clearOv" data-k="${k}">${ic('sync')} Zurück zum Coach-Plan</button>`:''}`)}
@@ -1502,8 +1513,10 @@ const WMO=c=>c===0?['☀️','klar']:c===1?['🌤️','überwiegend klar']:c===2
 const wxOk=()=>!!(WX&&WX.data&&WX.data.daily&&S.settings.wx.on&&S.settings.wx.lat!=null);
 async function fetchWx(force){const w=S.settings.wx;if(!w.on||w.lat==null)return;
   if(!force&&WX&&WX.lat===w.lat&&WX.lon===w.lon&&Date.now()-WX.t<45*60e3)return;
-  try{const u=`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_min,apparent_temperature_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,sunrise,sunset&timezone=auto&forecast_days=7`;
-    const r=await fetch(u);if(!r.ok)throw 0;const data=await r.json();WX={t:Date.now(),lat:w.lat,lon:w.lon,data};localStorage.setItem('velox.wx',JSON.stringify(WX));_cache={};
+  try{const u=`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation,is_day,relative_humidity_2m&daily=uv_index_max,weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_min,apparent_temperature_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,sunrise,sunset&timezone=auto&forecast_days=7`;
+    const r=await fetch(u);if(!r.ok)throw 0;const data=await r.json();let aq=null;
+    try{const ra=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${w.lat}&longitude=${w.lon}&current=european_aqi,pm2_5,ozone,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,ragweed_pollen&timezone=auto`);if(ra.ok)aq=await ra.json()}catch(e){}
+    WX={t:Date.now(),lat:w.lat,lon:w.lon,data,aq};localStorage.setItem('velox.wx',JSON.stringify(WX));_cache={};
     if(!$('#ov').classList.contains('on')&&!LK&&(TAB==='home'||TAB==='cal'))render();if(force)toast('🌤️ Wetter aktualisiert')}
   catch(e){if(force)toast(ic('warn')+' Wetter konnte nicht geladen werden')}}
 function wxDay(k){if(!wxOk())return null;const d=WX.data.daily,i=d.time.indexOf(k);if(i<0)return null;
@@ -1532,6 +1545,8 @@ function coachWx(p){if(!p||!wxOk())return null;const k=p.date,day=wxDay(k);if(!d
   else if(dark&&!bikeOut&&r.best!=null){r.title='🌙 Dunkel zur üblichen Zeit';r.text=`Reflektoren oder Stirnlampe mitnehmen – oder bei Tageslicht um ${r.best} Uhr.`}
   else{r.title=a>=8&&a<=20&&pp<30?'Perfektes Trainingswetter 👌':'Wetter passt ✓';r.text=r.best!=null?`Am angenehmsten um ${r.best} Uhr.`:'Keine Einschränkungen.'}
   if(bikeOut&&(storm||icy||wet||windy))r.action=['wxIn','Auf die Rolle verlegen'];
+  if(isToday&&r.sev==='ok'){const aq=WX.aq?.current?.european_aqi,pol=pollenNow();if(aq>=60){r.sev='warn';r.title='😮‍💨 Schlechte Luftqualität';r.text='Heute die Intensität rausnehmen oder drinnen trainieren – bei hoher Belastung atmest du viel mehr Schadstoffe ein.';if(bikeOut)r.action=['wxIn','Auf die Rolle verlegen']}
+    else if(pol[0]&&pol[0][1]==='stark'){r.sev='warn';r.title=`🌿 Starker Pollenflug (${pol[0][0]})`;r.text='Falls du allergisch bist: eher abends trainieren, Sonnenbrille tragen, danach duschen.'}}
   return r}
 function clothesFor(sport,a,wet,windy,dark){const out=[];
   if(SPORTS[sport]?.cat==='bike'){const f=a-6;
@@ -1540,10 +1555,41 @@ function clothesFor(sport,a,wet,windy,dark){const out=[];
   else{if(a>=22)out.push('Shirt & kurze Hose','Kappe & Sonnencreme');else if(a>=15)out.push('Shirt & kurze Hose');else if(a>=10)out.push('Langarmshirt','Kurze Hose oder 3/4-Tight');else if(a>=5)out.push('Langarmshirt','Lange Tight','Dünne Handschuhe');else if(a>=0)out.push('Funktions-Langarm + leichte Jacke','Lange Tight','Handschuhe & Stirnband');else out.push('Zwiebellook: Thermo-Langarm + Jacke','Warme Tight','Mütze & Handschuhe');
     if(wet)out.push('Regen- oder Windjacke');if(windy&&a<12)out.push('Windjacke');if(dark)out.push('Reflektoren / Stirnlampe')}
   return out}
+const wxEm=(c,day)=>!day&&c<=2?(c===2?'☁️':'🌙'):WMO(c)[0];
+const AQI=v=>v==null?null:v<=20?['gut','var(--good)']:v<=40?['ordentlich','var(--good)']:v<=60?['mäßig','var(--warn)']:v<=80?['schlecht','var(--bad)']:['sehr schlecht','var(--bad)'];
+const POLL={alder_pollen:'Erle',birch_pollen:'Birke',grass_pollen:'Gräser',mugwort_pollen:'Beifuß',ragweed_pollen:'Ambrosia'};
+function pollenNow(){const c=WX?.aq?.current;if(!c)return[];return Object.entries(POLL).map(([k,n])=>[n,c[k]]).filter(([n,v])=>v!=null&&v>=10).map(([n,v])=>[n,v>=50?'stark':v>=20?'mäßig':'schwach',v]).sort((a,b)=>b[2]-a[2])}
+function daySummary(){if(!wxOk())return'';const t=ymd(today()),h=new Date().getHours(),hs=wxHours(t).filter(x=>x.h>=h),cur=WX.data.current,out=[];
+  const wetNow=(cur?.precipitation||0)>0.1||(hs[0]&&hs[0].pp>=60&&hs[0].pr>=.2);
+  if(wetNow){const dry=hs.find(x=>x.pp<40&&x.pr<.1);out.push(dry?`🌂 Regen bis ca. ${dry.h} Uhr`:'🌧️ Regen bis in die Nacht')}
+  else{const rain=hs.find(x=>x.pp>=60&&x.pr>=.2);out.push(rain?`🌂 Ab ${rain.h} Uhr Regen (${Math.round(rain.pp)} %)`:'✅ Heute bleibt es trocken')}
+  const tm=wxDay(ymd(addD(today(),1)));if(tm&&tm.tmin<=0)out.push(`🥶 Nachts Frost (${Math.round(tm.tmin)}°)`);
+  const st=hs.find(x=>x.wc>=95);if(st)out.push(`⛈️ Gewitter ab ${st.h} Uhr`);const gw=Math.max(0,...hs.map(x=>x.ws));if(gw>=40)out.push(`💨 Wind bis ${Math.round(gw)} km/h`);
+  return out.join(' · ')}
+function wxNow(){const w=S.settings.wx;if(!w.on)return'';
+  if(w.lat==null)return`<div class="wxnow" data-act="wxSetup"><div class="row" style="gap:12px"><div class="em">🌤️</div><div><b>Wetter einrichten</b><div class="sm">Standort festlegen – aktuelles Wetter, Vorhersage & Trainingstipps direkt hier.</div></div></div></div>`;
+  if(!wxOk()||!WX.data.current)return`<div class="wxnow" data-act="wxRefresh"><div class="sm">🌤️ Wetter für ${esc(w.name||'deinen Standort')} wird geladen …</div></div>`;
+  const c=WX.data.current,d=wxDay(ymd(today()));if(!d)return'';const [em,txt]=WMO(c.weather_code),night=wxEm(c.weather_code,c.is_day),h=new Date().getHours();
+  const hs=[...wxHours(ymd(today())),...wxHours(ymd(addD(today(),1)))].slice(h+1,h+9);
+  const aq=WX.aq?.current?.european_aqi,aqL=AQI(aq),pol=pollenNow(),uv=WX.data.daily.uv_index_max?.[0];
+  return`<div class="wxnow fade" data-act="wxSheet"><div class="row between"><div class="row" style="gap:12px"><div class="em">${night}</div><div><div class="tp">${Math.round(c.temperature_2m)}°</div><div class="sm">${txt} · gefühlt ${Math.round(c.apparent_temperature)}°</div></div></div>
+    <div style="text-align:right" class="sm">${esc(w.name||'Mein Standort')}<br>H ${Math.round(d.tmax)}° · T ${Math.round(d.tmin)}°<br>🌅 ${d.rise} · 🌇 ${d.set}</div></div>
+    <div class="sum">${daySummary()}</div>
+    <div class="hrs">${hs.map(x=>`<div><b>${x.h}</b><span>${wxEm(x.wc,x.day)}</span>${Math.round(x.t)}°<i>${x.pp>=20?Math.round(x.pp)+'%':'&nbsp;'}</i></div>`).join('')}</div>
+    <div class="chips"><span class="chip">💨 ${Math.round(c.wind_speed_10m)} km/h</span><span class="chip">💧 ${Math.round(c.relative_humidity_2m??0)} %</span>${aqL?`<span class="chip">😮‍💨 Luft ${aqL[0]}</span>`:''}${uv>=3?`<span class="chip">🧴 UV ${Math.round(uv)}</span>`:''}${pol.length?`<span class="chip">🌿 ${pol[0][0]} ${pol[0][1]}</span>`:''}</div></div>`}
+function openWxSheet(){if(!wxOk())return;const t=ymd(today()),tm=ymd(addD(today(),1)),dl=WX.data.daily,aq=WX.aq?.current,aqL=AQI(aq?.european_aqi),pol=pollenNow();
+  const hrsRow=k=>`<div class="wxh">${wxHours(k).filter(x=>k!==t||x.h>=new Date().getHours()).map(x=>`<div>${x.h} Uhr<span>${wxEm(x.wc,x.day)}</span>${Math.round(x.t)}°<br><small style="color:var(--c-ride)">${Math.round(x.pp)} %</small><br><small class="muted">${Math.round(x.ws)} km/h</small></div>`).join('')}</div>`;
+  openSheet(`${sheetHead('Wetter · '+esc(S.settings.wx.name||'Standort'))}
+  <div class="small muted" style="margin-top:4px">${daySummary()}</div>
+  <h2>Heute<span class="line"></span></h2>${hrsRow(t)}<h2>Morgen<span class="line"></span></h2>${hrsRow(tm)}
+  <h2>7 Tage<span class="line"></span></h2><div class="card">${dl.time.map((k,i)=>`<div class="kv"><span>${i===0?'Heute':i===1?'Morgen':WDL[parse(k).getDay()]}</span><b>${WMO(dl.weather_code[i])[0]} ${Math.round(dl.temperature_2m_min[i])}° / ${Math.round(dl.temperature_2m_max[i])}° <span class="muted small">💧${Math.round(dl.precipitation_probability_max[i]??0)} % · 💨${Math.round(dl.wind_speed_10m_max[i])}${dl.uv_index_max?' · UV '+Math.round(dl.uv_index_max[i]):''}</span></b></div>`).join('')}</div>
+  ${aq?`<h2>Luft & Pollen<span class="line"></span></h2><div class="card"><div class="kv"><span>Luftqualität (EU-Index)</span><b style="color:${aqL[1]}">${aqL[0]} · ${Math.round(aq.european_aqi)}</b></div><div class="kv"><span>Feinstaub PM2,5</span><b>${Math.round(aq.pm2_5??0)} µg/m³</b></div><div class="kv"><span>Ozon</span><b>${Math.round(aq.ozone??0)} µg/m³</b></div>${pol.length?pol.map(([n,l,v])=>`<div class="kv"><span>🌿 ${n}</span><b>${l} (${Math.round(v)})</b></div>`).join(''):'<div class="kv"><span>🌿 Pollen</span><b>keine nennenswerten</b></div>'}
+  <div class="tiny muted" style="margin-top:8px">Bei schlechter Luft oder starkem Pollenflug: Intensität runter oder Einheit drinnen machen.</div></div>`:''}
+  <div class="tiny muted" style="margin-top:12px">Daten: Open-Meteo · Stand ${new Date(WX.t).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div>`)}
 function wxHero(n){const c=coachWx(n);if(!c)return S.settings.wx.on&&S.settings.wx.lat==null?`<div class="wxbox" data-act="wxSetup" style="cursor:pointer"><b>🌤️ Wetter-Coach einrichten</b>Standort festlegen – dann passt sich die Empfehlung ans Wetter an.</div>`:'';
   return`<div class="wxbox"><b>${c.title}</b><div class="tiny" style="opacity:.85">${c.at} Uhr: ${c.summary}</div><div style="margin-top:4px">${c.text}</div>${c.action?`<button class="btn sm solid" data-act="${c.action[0]}" data-k="${n.date}">${c.action[1]}</button>`:''}</div>`}
 function wxDetail(w){const c=coachWx(w);if(!c||!c.clothes?.length)return'';return`<h4>🧥 Anziehen (${c.at} Uhr, gefühlt ${Math.round(c.feel)}°)</h4><ul class="small">${c.clothes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
-function wxHoursHTML(k,bestH){const hs=wxHours(k).filter(x=>x.h>=6&&x.h<=21);if(!hs.length)return'';return`<div class="wxh">${hs.filter((x,i)=>i%2===0).map(x=>`<div class="${x.h===bestH?'best':''}">${x.h} Uhr<span>${WMO(x.wc)[0]}</span>${Math.round(x.t)}°<br><small style="color:var(--c-ride)">${Math.round(x.pp)} %</small></div>`).join('')}</div>`}
+function wxHoursHTML(k,bestH){const hs=wxHours(k).filter(x=>x.h>=6&&x.h<=21);if(!hs.length)return'';return`<div class="wxh">${hs.filter((x,i)=>i%2===0).map(x=>`<div class="${x.h===bestH?'best':''}">${x.h} Uhr<span>${wxEm(x.wc,x.day)}</span>${Math.round(x.t)}°<br><small style="color:var(--c-ride)">${Math.round(x.pp)} %</small></div>`).join('')}</div>`}
 function wxCard(){const w=S.settings.wx;if(!w.on)return'';
   if(w.lat==null)return`<h2>🌤️ Wetter-Coach<span class="line"></span></h2><div class="card fade"><div class="small">Mit deinem Standort passt VELOX Uhrzeit, Ort (draußen/Rolle) und Kleidung deiner Trainings ans Wetter an.</div><div class="btnrow"><button class="btn acc" data-act="wxGps">📍 Standort verwenden</button><button class="btn" data-act="wxSetup">Ort suchen</button></div></div>`;
   if(!wxOk())return`<h2>🌤️ Wetter-Coach<span class="line"></span></h2><div class="card fade"><div class="small muted">Wetter wird geladen … (${esc(w.name)})</div></div>`;
@@ -1560,6 +1606,37 @@ function openWxSetup(){openSheet(`${sheetHead('Wetter-Standort')}<div class="sma
 function setWxLoc(name,lat,lon){S.settings.wx=Object.assign(S.settings.wx,{name,lat:Math.round(lat*1000)/1000,lon:Math.round(lon*1000)/1000,on:true});save();closeSheet();WX=null;render();fetchWx(true)}
 function wxGps(){if(!navigator.geolocation){toast('Standort nicht verfügbar');return}toast('📍 Standort wird ermittelt …');
   navigator.geolocation.getCurrentPosition(p=>setWxLoc('Mein Standort',p.coords.latitude,p.coords.longitude),e=>{toast(ic('warn')+' Kein Zugriff auf den Standort – Ort bitte suchen',3500);openWxSetup()},{timeout:12000,maximumAge:3600e3,enableHighAccuracy:false})}
+
+/* =====================================================================
+   KALENDER-EXPORT (.ics, Ganztagstermine)
+   ===================================================================== */
+const SP_EMO={run:'🏃',ride:'🚴',zwift:'🚲',swim:'🏊',strength:'🏋️',walk:'🐕',other:'⚡'};
+function stepsText(w){let t=0;return w.steps.map(s=>{const st=t,d=s.reps?s.reps*s.on.min+(s.off?(s.reps-1)*s.off.min:0):s.min;t+=d;
+  return s.reps?`• ${fmtClock(st)}–${fmtClock(t)}  ${s.reps}× ${mm(s.on.min)} ${s.on.label} (${tgt(w.sport,s.on.z,s.on.special)})${s.off?`, dazwischen ${mm(s.off.min)} ${s.off.label}`:''}`
+    :`• ${fmtClock(st)}–${fmtClock(t)}  ${s.label} ${mm(s.min)} (${tgt(w.sport,s.z,s.special)})`}).join('\n')}
+const icsEsc=t=>String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+function icsFold(line){const out=[];let cur='',len=0;for(const ch of line){const b=new TextEncoder().encode(ch).length;if(len+b>73){out.push(cur);cur=' '+ch;len=1+b}else{cur+=ch;len+=b}}out.push(cur);return out.join('\r\n')}
+function buildIcs(items,opt){const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VELOX//Trainingscoach//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:VELOX Training'];
+  items.forEach(p=>{const d=p.date.replace(/-/g,''),e=ymd(addD(parse(p.date),1)).replace(/-/g,''),c=wxOk()?coachWx(p):null;
+    const desc=[p.short,'',`Dauer: ~${fmtDur(p.durMin)}${p.distKm?' · '+fmtKm(p.distKm)+' km':''} · Belastung ~${p.tss} Punkte`,'','Ablauf:',stepsText(p),p.peak?'\nWichtigster Moment: '+p.peak:'',p.cues?.length?'\nTipps:\n'+p.cues.map(x=>'• '+x).join('\n'):'',c?`\nWetter (Stand Export): ${c.title} – ${c.text}`:'','\nWenn\'s nicht läuft: '+(p.alt||'Kürzen oder locker laufen.'),'\n– geplant von VELOX'].filter(x=>x!=='').join('\n');
+    L.push('BEGIN:VEVENT',`UID:velox-${p.date}-${p.role||'x'}@velox.app`,`DTSTAMP:${now}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${e}`,
+      icsFold('SUMMARY:'+icsEsc(`${SP_EMO[p.sport]||'⚡'} ${p.title}${p.hard?' ⭐':''}`)),icsFold('DESCRIPTION:'+icsEsc(desc)),'TRANSP:TRANSPARENT','CATEGORIES:Training');
+    if(opt.alarm)L.push('BEGIN:VALARM','ACTION:DISPLAY',icsFold('DESCRIPTION:'+icsEsc('Heute: '+p.title)),`TRIGGER;RELATED=START:PT${opt.alarm}H`,'END:VALARM');
+    L.push('END:VEVENT');S.calExp[p.date]=p.title});
+  L.push('END:VCALENDAR');save(true);return L.join('\r\n')+'\r\n'}
+let ICS={range:7,alarm:7};
+function openIcs(){const P=plan(),end=ymd(addD(today(),ICS.range)),its=P.filter(p=>p.date<end);
+  openSheet(`${sheetHead('In iPhone-Kalender')}<div class="small muted" style="margin-top:4px">Als <b>Ganztagstermine</b> – du schiebst sie im Kalender einfach dorthin, wo es passt (Mittagspause, abends …).</div>
+  <div class="field"><label>Zeitraum</label><div class="chips">${[[7,'Nächste 7 Tage'],[14,'14 Tage'],[21,'3 Wochen']].map(([v,l])=>`<button class="chip ${ICS.range===v?'on':''}" data-act="icsRange" data-k="${v}">${l}</button>`).join('')}</div></div>
+  <div class="field"><label>Erinnerung am Trainingstag</label><div class="chips">${[[0,'Keine'],[7,'7 Uhr'],[9,'9 Uhr'],[12,'12 Uhr']].map(([v,l])=>`<button class="chip ${ICS.alarm===v?'on':''}" data-act="icsAlarm" data-k="${v}">${l}</button>`).join('')}</div></div>
+  <div class="card list">${its.map(p=>`<div class="item" style="cursor:default">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ganztägig${S.calExp[p.date]?(S.calExp[p.date]===p.title?' · schon exportiert':' · <b style="color:var(--warn)">geändert</b>'):''}</div></div></div>`).join('')||'<div class="empty">Keine Einheiten geplant</div>'}</div>
+  <button class="btn acc full" style="margin-top:12px;padding:15px" data-act="icsGo" ${its.length?'':'disabled'}>📅 ${its.length} Termine exportieren</button>
+  <div class="tiny muted" style="margin-top:10px">Tipp: Wenn sich der Plan ändert, zeigt VELOX dir das hier und im Tag an. Alte Termine im Kalender dann einfach löschen oder anpassen – iOS überschreibt importierte Termine nicht automatisch.</div>`)}
+function deliverIcs(ics,name){const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(isIOS){const url='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);const w=window.open(url,'_blank');if(!w)location.href=url;return}
+  const b=new Blob([ics],{type:'text/calendar'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
+function icsPlanChanged(){const P=plan();return Object.entries(S.calExp).filter(([k,t])=>k>=ymd(today())&&(P.find(p=>p.date===k)?.title||'—')!==t).length}
 
 /* =====================================================================
    HEUTE ERLEDIGT
@@ -1868,9 +1945,14 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'icsSheet':openIcs();break;
+    case'icsRange':ICS.range=+k;openIcs();break;
+    case'icsAlarm':ICS.alarm=+k;openIcs();break;
+    case'icsGo':{const end=ymd(addD(today(),ICS.range)),its=plan().filter(p=>p.date<end);deliverIcs(buildIcs(its,{alarm:ICS.alarm}),'velox-training.ics');closeSheet();render();toast('📅 '+its.length+' Termine – im Dialog „Alle hinzufügen“ tippen',4000);break}
+    case'icsOne':{const p=plan().find(x=>x.date===k);if(p){deliverIcs(buildIcs([p],{alarm:ICS.alarm}),'velox-'+k+'.ics');toast('📅 Termin exportiert',2500)}break}
     case'wxIn':S.wxSwap[k]='in';save();closeSheet();render();toast('🚲 Auf die Rolle verlegt');break;
     case'wxOut':S.wxSwap[k]='out';save();closeSheet();render();toast('☀️ Ab nach draußen!');break;
-    case'wxGps':wxGps();break;case'wxSetup':openWxSetup();break;case'wxRefresh':fetchWx(true);break;
+    case'wxGps':wxGps();break;case'wxSetup':openWxSetup();break;case'wxRefresh':fetchWx(true);break;case'wxSheet':openWxSheet();break;
     case'wxToggle':S.settings.wx.on=!S.settings.wx.on;save();render();if(S.settings.wx.on)fetchWx(true);break;
     case'bioAsk':S.seen.bioAsk=1;save(true);bioRegister();break;
     case'bioToggle':if(bioOn()){localStorage.removeItem(BIOKEY);toast('Face ID deaktiviert');render()}else bioRegister();break;
