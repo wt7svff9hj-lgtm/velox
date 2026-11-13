@@ -255,21 +255,33 @@ input[type=date].inp::-webkit-date-and-time-value,input[type=time].inp::-webkit-
 .field>label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hint{margin-top:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,var(--card));border-left:3px solid var(--accent);font-size:12.5px;line-height:1.45;color:var(--text);animation:fadeUp .25s var(--ease) both}
 .hint b{color:var(--accent)}
-/* Lock – Zielband */
-.lock{position:fixed;inset:0;z-index:100;overflow:hidden;color:var(--text);touch-action:none}
-.lock .door{position:absolute;top:0;bottom:0;width:50.5%;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 16%,var(--bg)),var(--bg) 62%);background-size:200% 100%;z-index:0;will-change:transform}
-.lock .door.l{left:0;background-position:0 0;box-shadow:inset -1px 0 0 color-mix(in srgb,var(--text) 6%,transparent)}
-.lock .door.r{right:0;background-position:100% 0}
-.lock .door::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 46px,color-mix(in srgb,var(--accent) 5%,transparent) 46px 48px);opacity:.7}
-.lock .lc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(30px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom))}
+/* Lock – Startschuss */
+.lock{position:fixed;inset:0;z-index:100;overflow:hidden;color:var(--text);touch-action:none;background:radial-gradient(130% 70% at 50% 0%,color-mix(in srgb,var(--accent) 16%,var(--bg)),var(--bg) 62%)}
+.lock .trk{position:absolute;left:-10%;right:-10%;bottom:0;height:47%;pointer-events:none;transform-origin:50% 0;transition:transform 1.1s cubic-bezier(.5,0,.2,1),opacity .6s}
+.lock .trk svg{width:100%;height:100%}
+.lock .trk .dash{stroke-dasharray:10 16;animation:lane 1.4s linear infinite}
+.lock.go .trk .dash{animation-duration:.1s}
+.lock.go .trk{transform:scale(2.4) translateY(-6%)}
+@keyframes lane{to{stroke-dashoffset:-52}}
+.lock canvas.warp{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.lock .lc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(30px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom));transition:transform .55s cubic-bezier(.6,0,.9,.4),opacity .45s,filter .45s}
 .lock .ver{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:3;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);background:color-mix(in srgb,var(--card) 70%,transparent);padding:4px 9px;border-radius:99px}
 .lock .ver.up{color:var(--accentText);background:var(--accent)}
 .lock .lg svg{width:64px;height:64px;border-radius:18px;box-shadow:0 10px 36px color-mix(in srgb,var(--accent) 45%,transparent)}
 .lock h3{margin:14px 0 2px;font-size:24px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em}
-.lock .tape{position:absolute;left:0;right:0;height:30px;z-index:1;pointer-events:none}
-.lock .th{position:absolute;top:0;height:30px;width:52%;background:repeating-conic-gradient(#121212 0 25%,#f4f4f4 0 50%) 0 0/15px 15px;border-top:3px solid var(--accent);border-bottom:3px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.45);will-change:transform}
-.lock .th.l{left:-1%;transform-origin:0 50%}.lock .th.r{right:-1%;transform-origin:100% 50%}
-.lock .tape .tag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--accent);color:var(--accentText);font-size:11px;font-weight:900;font-style:italic;letter-spacing:.14em;padding:5px 10px;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:2}
+.gotxt{position:absolute;top:50%;left:50%;z-index:4;transform:translate(-50%,-50%) scale(3);font-size:120px;font-weight:900;font-style:italic;color:var(--accent);opacity:0;pointer-events:none;letter-spacing:-.05em;text-shadow:0 0 30px color-mix(in srgb,var(--accent) 80%,transparent),0 0 90px color-mix(in srgb,var(--accent) 50%,transparent);-webkit-text-stroke:2px color-mix(in srgb,#fff 40%,transparent)}
+.lock.go .gotxt{animation:goslam 1.15s cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes goslam{0%{opacity:0;transform:translate(-50%,-50%) scale(3.2)}14%{opacity:1;transform:translate(-50%,-50%) scale(.92)}22%{transform:translate(-50%,-50%) scale(1.06)}30%{transform:translate(-50%,-50%) scale(1)}62%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}100%{opacity:0;transform:translate(-50%,-50%) scale(7)}}
+.lock .flash{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(circle at 50% 50%,#fff,color-mix(in srgb,var(--accent) 60%,transparent) 40%,transparent 70%);opacity:0}
+.lock.go .flash{animation:flash2 .5s ease-out}
+@keyframes flash2{0%{opacity:.9}100%{opacity:0}}
+.lock.go{animation:lshake .45s .05s}
+@keyframes lshake{15%{transform:translate(-8px,4px)}30%{transform:translate(7px,-5px)}45%{transform:translate(-5px,3px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
+.lock.go .lc{transform:scale(1.04)}
+.lock.zoom .lc{transform:scale(2.6);opacity:0;filter:blur(10px)}
+.lock.zoom{transition:opacity .5s .25s;opacity:0}
+#app.settle{animation:settle .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes settle{from{transform:scale(1.08);opacity:.3;filter:blur(6px)}}
 .lights{display:flex;gap:14px;margin:22px 0 8px;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,#000 45%,var(--card));box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
 .lights i{width:22px;height:22px;border-radius:50%;background:#2a2e36;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);transition:background .15s,box-shadow .15s}
 .lights i.on{background:#ff3b3b;box-shadow:0 0 16px #ff3b3b,inset 0 -2px 4px rgba(0,0,0,.3)}
@@ -282,32 +294,6 @@ input[type=date].inp::-webkit-date-and-time-value,input[type=time].inp::-webkit-
 .keys button.ghost{background:none;border:0;font-size:15px}
 .lock .forgot{background:none;border:0;color:var(--muted);font-size:13px;font-weight:700;margin-top:4px;cursor:pointer}
 .lock .lsub{color:var(--muted);font-size:14px;text-align:center;max-width:300px}
-.lock .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:5;pointer-events:none}
-.lock .blogo{position:absolute;left:50%;z-index:4;opacity:0;pointer-events:none;transform:translate(-50%,-50%)}
-.lock .blogo svg{width:120px;height:120px;border-radius:32px}
-.lock.burst{animation:lshake .35s}
-.lock.burst .flash{animation:flash .45s ease-out}
-.lock.burst .lc{animation:lcout .3s ease-in forwards}
-.lock.burst .th.l{animation:tapeL 1s cubic-bezier(.2,.7,.3,1) forwards}
-.lock.burst .th.r{animation:tapeR 1s cubic-bezier(.2,.7,.3,1) forwards}
-.lock.burst .tape .tag{animation:tagUp .8s cubic-bezier(.2,.7,.3,1) forwards}
-.lock.burst .door.l{animation:doorL .9s .3s cubic-bezier(.6,0,.3,1) forwards}
-.lock.burst .door.r{animation:doorR .9s .3s cubic-bezier(.6,0,.3,1) forwards}
-.lock.burst .blogo{animation:blogo .95s .1s cubic-bezier(.2,.8,.2,1) forwards}
-@keyframes flash{0%{opacity:.85}100%{opacity:0}}
-.lock .runner{position:absolute;left:0;z-index:4;font-size:92px;line-height:1;opacity:0;pointer-events:none;transform:translateX(-30vw) scaleX(-1);filter:drop-shadow(-18px 0 0 color-mix(in srgb,var(--accent) 35%,transparent)) drop-shadow(-36px 0 0 color-mix(in srgb,var(--accent) 15%,transparent))}
-.lock.run .runner{animation:runIn .42s cubic-bezier(.35,0,.7,1) forwards}
-.lock.burst .runner{animation:runOut .55s cubic-bezier(.2,.6,.4,1) forwards}
-@keyframes runIn{0%{opacity:1;transform:translateX(-30vw) scaleX(-1)}100%{opacity:1;transform:translateX(calc(50vw - 46px)) scaleX(-1)}}
-@keyframes runOut{0%{opacity:1;transform:translateX(calc(50vw - 46px)) scaleX(-1)}100%{opacity:1;transform:translateX(115vw) scaleX(-1.4) scaleY(1.4)}}
-@keyframes lshake{20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
-@keyframes lcout{to{opacity:0;transform:scale(1.06)}}
-@keyframes tapeL{0%{transform:none}25%{transform:translateX(-4%) rotate(-6deg)}100%{transform:translate(-70vw,40vh) rotate(-70deg);opacity:.0}}
-@keyframes tapeR{0%{transform:none}25%{transform:translateX(4%) rotate(6deg)}100%{transform:translate(70vw,40vh) rotate(70deg);opacity:.0}}
-@keyframes tagUp{to{transform:translate(-50%,-260%) scale(1.6) rotate(-8deg);opacity:0}}
-@keyframes doorL{to{transform:translateX(-104%) skewY(-4deg)}}
-@keyframes doorR{to{transform:translateX(104%) skewY(4deg)}}
-@keyframes blogo{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(-6deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.2) rotate(4deg)}}
 .sheet{overscroll-behavior:contain;will-change:transform}
 .grab{position:relative}.grab::before{content:"";position:absolute;inset:-14px -60px}
 button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipulation}
@@ -373,7 +359,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='5.1';
+const KEY='velox.v1',VERSION='5.3';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -1569,20 +1555,20 @@ function renderLock(){const el=$('#lock'),m=LK.mode,th=S.settings.theme,lat=loca
   const title={unlock:'Startbereit?',create:'PIN festlegen',confirm:'PIN wiederholen',disable:'PIN bestätigen',forgot:'PIN vergessen?'}[m];
   const sub={unlock:`${S.settings.name?esc(S.settings.name)+', g':'G'}ib deine PIN ein – dann geht's los.`,create:'Wähle 4 Ziffern. Sie schützen VELOX auf diesem Gerät.',confirm:'Zur Sicherheit noch einmal.',disable:'Aktuelle PIN eingeben, um die Sperre abzuschalten.',forgot:''}[m];
   const upd=lat&&cmpVer(lat,VERSION)>0;
-  el.innerHTML=`<div class="door l"></div><div class="door r"></div>
-  <div class="tape" id="tape"><div class="th l"></div><div class="th r"></div><div class="tag">ZIEL</div></div>
+  const lanes=[-260,-150,-50,50,150,260];
+  el.innerHTML=`<div class="trk"><svg viewBox="0 0 400 300" preserveAspectRatio="none"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${th.accent}" stop-opacity="0"/><stop offset="1" stop-color="${th.accent}" stop-opacity=".24"/></linearGradient></defs><path d="M170 0 L230 0 L460 300 L-60 300Z" fill="url(#tg)"/>${lanes.map(x=>`<line x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="${th.accent}" stroke-opacity=".38" stroke-width="1.4"/>`).join('')}${[-100,0,100,205].map(x=>`<line class="dash" x1="${200+x*.12}" y1="0" x2="${200+x*1.6}" y2="300" stroke="#fff" stroke-opacity=".5" stroke-width="2.4"/>`).join('')}</svg></div>
+  <canvas class="warp" id="warp"></canvas>
   <div class="ver ${upd?'up':''}">VELOX v${VERSION}${upd?' · Update v'+lat:''}</div>
   <div class="lc"><div class="lg">${logoSVG(th.accent,th.accentText)}</div><h3>${title}</h3><div class="lsub">${sub}</div>
   ${m==='forgot'?`<div class="card" style="margin-top:20px;max-width:340px"><div class="small">Die PIN liegt nur auf diesem Gerät und kann nicht wiederhergestellt werden. Du kannst VELOX auf diesem Gerät zurücksetzen – ist der Sync eingerichtet, holst du deine Daten danach mit Token, Passwort und Gist-ID zurück.</div><div class="btnrow"><button class="btn" data-l="back">Zurück</button><button class="btn danger" data-l="reset">Zurücksetzen</button></div></div>`:
   `<div class="lights" id="lights">${[0,1,2,3].map(i=>`<i class="${i<LK.entry.length?'on':''}"></i>`).join('')}</div>
   <div class="keys" id="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="ghost" data-l="${m==='unlock'?'forgot':'cancel'}">${m==='unlock'?'':'Abbr.'}</button><button data-k="0">0</button><button class="ghost" data-l="del">⌫</button></div>
   ${m==='unlock'?`<button class="forgot" data-l="forgot">PIN vergessen?</button>`:''}${m==='create'&&!S.settings.onboarded&&!pinData()?`<button class="forgot" data-l="skip">Ohne PIN fortfahren</button>`:''}`}</div>
-  <div class="runner">🏃</div><div class="blogo">${logoSVG(th.accent,th.accentText)}</div><div class="flash"></div>`;
+  <div class="gotxt">GO!</div><div class="flash"></div>`;
   $$('[data-k]',el).forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
   $$('[data-l]',el).forEach(b=>b.onclick=()=>pinAct(b.dataset.l,b));
-  requestAnimationFrame(placeTape)}
-function placeTape(){const t=$('#tape'),l=$('#lights'),k=$('#keys');if(!t)return;let y;if(l&&k){const a=l.getBoundingClientRect().bottom,b=k.getBoundingClientRect().top;y=(a+b)/2}else y=innerHeight*.5;t.style.top=(y-15)+'px';const bl=$('#lock .blogo');if(bl)bl.style.top=y+'px';const rn=$('#lock .runner');if(rn)rn.style.top=(y-78)+'px'}
-addEventListener('resize',()=>{if($('#lock'))placeTape()});
+}
+
 function pinAct(a,b){if(a==='del'){LK.entry=LK.entry.slice(0,-1);updLights();return}
   if(a==='forgot'){LK.mode='forgot';renderLock();return}if(a==='back'){LK.mode='unlock';renderLock();return}
   if(a==='reset'){if(confirmInline(b,'Wirklich?')){localStorage.removeItem(KEY);localStorage.removeItem(PINKEY);location.reload()}return}
@@ -1598,11 +1584,22 @@ async function pinCheck(){const m=LK.mode,e=LK.entry;
   if(m==='disable'){localStorage.setItem(PINKEY,JSON.stringify({off:true}));toast('PIN-Sperre deaktiviert');return unlockDone(false)}
   unlockDone(true)}
 function pinFail(then,msg){const l=$('#lights');l.classList.add('shake');$$('#lights i').forEach(i=>i.className='on');toast(ic('warn')+' '+msg);setTimeout(()=>{LK.entry='';l.classList.remove('shake');updLights();then&&then()},520)}
-function unlockDone(anim){const el=$('#lock');const fin=()=>{el.remove();LK=null;render();if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,300);if(syncReady()&&S.settings.sync.auto)syncNow(true);checkUpdate(false)};
-  if(!anim||!S.settings.anim){fin();return}
-  render();updLights('g');setTimeout(()=>el.classList.add('run'),120);
-  setTimeout(()=>{el.classList.add('burst');const t=$('#tape').getBoundingClientRect();confetti({x:innerWidth/2,y:t.top+15,p:22,n:170,z:101})},540);
-  setTimeout(fin,1800)}
+function unlockDone(anim){const el=$('#lock');const fin=()=>{el.remove();LK=null;if(!S.settings.onboarded&&!S.sessions.length)setTimeout(openWizard,300);if(syncReady()&&S.settings.sync.auto)syncNow(true);checkUpdate(false)};
+  if(!anim||!S.settings.anim){render();fin();return}
+  render();const L=$$('#lights i');L.forEach(i=>i.className='');
+  L.forEach((i,n)=>setTimeout(()=>{i.className='on'},90+n*110));
+  setTimeout(()=>L.forEach(i=>i.className='g'),90+4*110+120);
+  const t0=90+4*110+170;
+  setTimeout(()=>{el.classList.add('go');warp(el)},t0);
+  setTimeout(()=>el.classList.add('zoom'),t0+700);
+  setTimeout(()=>{const a=$('#app');a.classList.remove('settle');void a.offsetWidth;a.classList.add('settle')},t0+800);
+  setTimeout(fin,t0+1350)}
+function warp(el){const c=$('#warp',el);if(!c)return;const dpr=devicePixelRatio||1,W=innerWidth,H=innerHeight;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  const cx=W/2,cy=H*.53,acc=S.settings.theme.accent,ps=Array.from({length:220},()=>{const a=Math.random()*Math.PI*2,d=Math.random()*40;return{a,d,v:1.5+Math.random()*3,w:Math.random()*2+.6,c:Math.random()<.65?acc:'#ffffff'}});
+  const t0=performance.now();(function f(t){const k=(t-t0)/1000;x.clearRect(0,0,W,H);x.lineCap='round';
+    ps.forEach(p=>{const d0=p.d;p.v*=1.075;p.d+=p.v;const ca=Math.cos(p.a),sa=Math.sin(p.a);x.strokeStyle=p.c;x.globalAlpha=Math.min(1,p.d/120)*Math.max(0,1-k*.9);x.lineWidth=p.w*(1+p.d/220);x.beginPath();x.moveTo(cx+ca*d0*.6,cy+sa*d0*.6);x.lineTo(cx+ca*p.d,cy+sa*p.d);x.stroke();if(p.d>Math.max(W,H)){p.d=Math.random()*20;p.v=2+Math.random()*3}});
+    if(k<1.3&&el.isConnected)requestAnimationFrame(f)})(t0)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>checkUpdate(false),1500)});
 document.addEventListener('keydown',e=>{if(!LK||!$('#lock'))return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinAct('del')});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')hiddenAt=Date.now();else if(pinOn()&&!LK&&hiddenAt&&Date.now()-hiddenAt>120000){closeSheet();showLock('unlock')}});
 
@@ -1614,7 +1611,7 @@ const latestVer=()=>localStorage.getItem('velox.latest');
 const updAvail=()=>{const l=latestVer();return l&&cmpVer(l,VERSION)>0?l:null};
 async function checkUpdate(manual){
   if(location.protocol==='file:'){if(manual)toast('Update-Prüfung nur über deine GitHub-Adresse möglich');return}
-  if(!manual&&Date.now()-(+localStorage.getItem('velox.lastCheck')||0)<3*3600e3)return;
+  if(!manual&&Date.now()-(+localStorage.getItem('velox.lastCheck')||0)<30*60e3)return;
   try{const base=location.pathname.replace(/[^/]*$/,'');const r=await fetch(base+'index.html?check='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;
     const m=(await r.text()).match(/VERSION='([\d.]+)'/);if(!m)throw 0;localStorage.setItem('velox.latest',m[1]);localStorage.setItem('velox.lastCheck',Date.now());
     if(cmpVer(m[1],VERSION)>0){if(manual)openUpdate();else if(TAB==='home'&&!$('#ov').classList.contains('on'))render()}
