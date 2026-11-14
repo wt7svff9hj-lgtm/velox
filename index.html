@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='7.0';
+const KEY='velox.v1',VERSION='7.2';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -519,7 +519,7 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.progress=d.progress||[];d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp','edits'].forEach(k=>d[k]=d[k]||{});d.progress=d.progress||[];d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -811,6 +811,39 @@ function applyVenue(it){if(!it||it.custom||S.wxSwap[it.date]||SPORTS[it.sport]?.
   if(t<thr&&coldPref&&it.sport==='ride'){it.sport='zwift';it.title=it.title.replace(/^Rad:/,'Rad indoor:');it.venue=`${est?'Um diese Jahreszeit':'Max.'} ~${Math.round(t)}° – bei Kälte fährst du lieber drinnen, darum auf der Rolle.`;
     const st=it.steps&&it.steps[0];if(it.role==='bikeEasy'&&it.durMin>75&&st&&st.min){const f=75/it.durMin;st.min=75;it.durMin=75;it.tss=Math.round(it.tss*f);it.title=it.title.replace(/· [0-9:]+ h$/,'· '+fmtDur(75));it.venue+=' Auf 75 min gekürzt – ohne Rollen und Ampelstopps ist das ähnlich wirksam wie eine längere Runde draußen.'}}
   else if(t>=thr+6&&it.sport==='zwift'&&V.warm!=null&&V.warm<=.4&&it.role!=='recovery'){it.sport='ride';it.title=it.title.replace(/^Rad:/,'Rad draußen:');it.venue=`~${Math.round(t)}° – bei solchem Wetter fährst du meist draußen. Ohne Wattmesser: Pulswerte unten.`}}
+/* ---- Empfohlene Einheiten anpassen ---- */
+function applyEditTo(it,e){if(!it||!e||it.custom)return it;if(e.key&&it.key!==e.key)return it;
+  const P=paces(),steps=JSON.parse(JSON.stringify(it.steps));let r0=null;
+  if(e.reps){const r=steps.find(x=>x.reps);if(r){r0=r.reps;r.reps=e.reps}}
+  const flex=steps.filter(x=>!x.reps&&x.z<=2.5&&x.min),cur=sum(expand(steps),x=>x.min);let target=null;
+  if(e.distKm&&it.distKm&&it.sport==='run')target=cur+(e.distKm-it.distKm)*P.thr*1.26/60;else if(e.durMin)target=e.durMin;
+  if(target!=null&&flex.length){const delta=target-cur,tot=sum(flex,x=>x.min);flex.forEach(x=>{x.min=Math.max(3,Math.round(x.min+delta*x.min/tot))})}
+  const o=Object.assign({},it,{steps});['durMin','tss','IF'].forEach(k=>delete o[k]);const n=mk(it.sport,it.role,o);
+  const fix=t=>{if(!t)return t;if(e.distKm&&it.distKm)t=t.split(fmtKm(it.distKm)+' km').join(fmtKm(e.distKm)+' km');if(r0&&e.reps)t=t.split(r0+'×').join(e.reps+'×');t=t.split(fmtDur(it.durMin)).join(fmtDur(n.durMin));return t};
+  n.title=fix(it.title);n.short=fix(it.short);if(e.distKm&&it.distKm)n.distKm=e.distKm;n.edited=true;return n}
+function applyEdits(out){return out.map(it=>S.edits[it.date]?applyEditTo(it,S.edits[it.date]):it)}
+function baseItem(k){const e=S.edits[k];delete S.edits[k];_cache={};const it=plan().find(x=>x.date===k);if(e)S.edits[k]=e;_cache={};return it?JSON.parse(JSON.stringify(it)):null}
+let EP=null;
+function openEditPlan(k){const b=baseItem(k);if(!b){toast('Kein Training an diesem Tag');return}const e=S.edits[k]||{};const r=b.steps.find(x=>x.reps);
+  EP={k,b,distKm:e.distKm||b.distKm||null,durMin:e.durMin||b.durMin,reps:e.reps||(r?r.reps:null),hasReps:!!r,useDist:!!(b.distKm&&b.sport==='run')};renderEditPlan()}
+function epItem(){const e={key:EP.b.key};if(EP.useDist)e.distKm=EP.distKm;else e.durMin=EP.durMin;if(EP.hasReps)e.reps=EP.reps;return applyEditTo(EP.b,e)}
+function renderEditPlan(){const it=epItem(),b=EP.b,f=fuelPlan(it);
+  const step=(lbl,val,a,unit)=>`<div class="field"><label>${lbl}</label><div class="row" style="gap:10px"><button class="btn" style="flex:0 0 54px;font-size:22px" data-act="epStep" data-k="${a}:-1">−</button><div class="grow" style="text-align:center;font-size:26px;font-weight:900;font-style:italic">${val}<span class="small muted" style="font-style:normal;font-weight:700"> ${unit}</span></div><button class="btn" style="flex:0 0 54px;font-size:22px" data-act="epStep" data-k="${a}:1">+</button></div></div>`;
+  openSheet(`${sheetHead('Training anpassen')}
+  <div class="small muted" style="margin:4px 0 10px">${esc(b.title)}</div>
+  ${EP.useDist?step('Distanz',fmtKm(EP.distKm),'dist','km'):step('Dauer',EP.durMin,'dur','min')}
+  ${EP.hasReps?step('Wiederholungen',EP.reps,'reps','×'):''}
+  <div class="card" style="margin-top:6px"><div class="lbl">So sieht's dann aus</div><div class="mid" style="margin-top:4px">${esc(it.title)}</div>${profileBars(it)}
+    <div class="stats"><div class="stat"><b>${fmtDur(it.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${it.distKm?fmtKm(it.distKm)+' km':zoneOf(it.IF)}</b><span>${it.distKm?'Distanz':'Tempo'}</span></div><div class="stat"><b>${it.tss}</b><span>Belastung</span></div></div>
+    ${f&&!f.short&&f.pack.length?`<div class="fuelbox">${esc(f.summary)}</div>`:''}
+    ${it.tss>b.tss*1.3?`<div class="small" style="margin-top:8px;color:var(--warn)">⚠️ Deutlich mehr als geplant – der Coach plant die Tage danach etwas lockerer.</div>`:''}</div>
+  <button class="btn acc full" style="padding:15px;margin-top:6px" data-act="epSave">${ic('check')} Übernehmen</button>
+  ${S.edits[EP.k]?`<button class="btn full" style="margin-top:8px" data-act="epReset">${ic('sync')} Original wiederherstellen</button>`:''}
+  <button class="btn ghost full" style="margin-top:8px" data-act="other" data-k="${EP.k}">Ganz anderes Training · Ruhetag …</button>`)}
+function epStep(k){const[a,d]=k.split(':'),n=+d;
+  if(a==='dist')EP.distKm=clamp(Math.round((EP.distKm+n*(EP.distKm>=10?1:.5))*2)/2,2,42);
+  else if(a==='dur')EP.durMin=clamp(EP.durMin+n*(EP.durMin>=60?10:5),10,420);
+  else if(a==='reps')EP.reps=clamp(EP.reps+n,1,20);renderEditPlan()}
 function plan(){return memo('plan',()=>{
   const st=S.settings,t0=today(),out=[];const trainedToday=S.sessions.some(s=>s.date===ymd(t0)&&s.sport!=='walk');const start=trainedToday?addD(t0,1):t0;
   for(let wk=0;wk<3;wk++){
@@ -835,6 +868,7 @@ function plan(){return memo('plan',()=>{
     Object.keys(assign).forEach(k=>{const w=build(assign[k],ph,wi,T,k);if(w)items.push(Object.assign(w,{date:k,phase:ph.k,deload:wi.deload}))});
     items.sort((a,b)=>a.date<b.date?-1:1);out.push(...items)}
   out.forEach(applyVenue);
+  out.splice(0,out.length,...applyEdits(out));
   out.forEach(it=>{const sw=S.wxSwap[it.date];if(sw==='in'&&it.sport==='ride'){it.sport='zwift';it.title=it.title.replace(/^Rad( draußen)?:/,'Rad indoor:');it.wxMoved='Wegen des Wetters auf die Rolle verlegt.'}else if(sw==='out'&&it.sport==='zwift'){it.sport='ride';it.venue=null;it.title=it.title.replace(/^Rad( indoor)?:/,'Rad draußen:');it.wxMoved='Wegen gutem Wetter nach draußen verlegt.'}});
   const R=readiness();
   if(out.length){const n=out[0];if(dBetween(t0,parse(n.date))<=1&&n.hard&&!n.custom){
@@ -940,7 +974,8 @@ function workoutDetail(w){return`<div class="det">
   ${w.learned?`<div class="tiny" style="margin-top:10px;opacity:.75">${ic('brain')} Dauer an deine typische Trainingszeit unter der Woche angepasst.</div>`:''}
   ${w.orig?`<h4>${ic('info')} Ursprünglich geplant</h4><div class="small">${esc(w.orig.title)}</div>`:''}
 </div>`}
-function sessMeta(s){const L=sessionLoad(s),a=[fmtDur(s.durMin)];if(s.distKm)a.push(fmtKm(s.distKm)+' km');if(s.sport==='run'&&s.distKm&&s.durMin)a.push(fmtPace(s.durMin*60/s.distKm)+' /km');if(s.np||s.watts)a.push((s.np||s.watts)+' W');if(s.hr)a.push('♥ '+s.hr);if(s.elev)a.push(s.elev+' hm');a.push(L.tss+' Pkt.');return a.join(' · ')}
+const kmh=s=>s&&s.distKm&&s.durMin?s.distKm/(s.durMin/60):null;const fmtKmh=v=>fmtN(v,1)+' km/h';
+function sessMeta(s){const L=sessionLoad(s),a=[fmtDur(s.durMin)];if(s.distKm)a.push(fmtKm(s.distKm)+' km');if(s.sport==='run'&&s.distKm&&s.durMin)a.push(fmtPace(s.durMin*60/s.distKm)+' /km');if(SPORTS[s.sport]?.cat==='bike'&&kmh(s))a.push('Ø '+fmtKmh(kmh(s)));if(s.np||s.watts)a.push((s.np||s.watts)+' W');if(s.hr)a.push('♥ '+s.hr);if(s.elev)a.push(s.elev+' hm');a.push(L.tss+' Pkt.');return a.join(' · ')}
 const sessItem=s=>`<div class="item" data-sess="${s.id}">${sIco(s.sport)}<div class="grow"><div class="t">${esc(SPORTS[s.sport].n)}${s.kind?` <span class="badge">${KINDS[s.kind]}</span>`:''}${s.together?` <span class="badge acc">${ic('couple')}</span>`:''}${s.coach?` <span class="badge" style="color:var(--${s.coach.score>=80?'good':s.coach.score>=66?'accent':'warn'})">🧠 ${s.coach.score}</span>`:''}</div><div class="m">${when(s.date)}${s.time?' · '+s.time:''} · ${sessMeta(s)}</div></div>${ic('chev','muted')}</div>`;
 const planItem=p=>`<div class="item" data-day="${p.date}">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ~${fmtDur(p.durMin)}${p.hard?' · <b style="color:var(--accent)">wichtig</b>':''}${p.custom?' · eigenes':''}${p.deload?' · Entlastung':''}</div></div>${ic('chev','muted')}</div>`;
 const insHTML=x=>{const m={good:['ok','var(--good)'],warn:['warn','var(--warn)'],bad:['bad','var(--bad)'],info:['info','var(--accent)']}[x.l];
@@ -1063,12 +1098,12 @@ function vHome(){
   ${n?`<div class="card hero fade" id="nextCard"><div class="bigicon">${ic(n.sport)}</div>
     <div class="row between"><span class="lbl">${when(n.date)} · ${SPORTS[n.sport].n}</span><span class="chip">${n.hard?'⭐ Schlüsseleinheit':ph.n}${n.deload?' · Entlastung':''}</span></div>
     <div class="title">${esc(n.title)}</div><div style="font-size:15px;font-weight:600">${esc(n.short)}</div>
-    ${n.adjusted?`<div class="chip" style="margin-top:10px;white-space:normal">${ic('warn')} an deine Tagesform angepasst</div>`:''}${n.venue?`<div class="chip" style="margin-top:10px;white-space:normal">${n.sport==='zwift'?'🏠':'🌳'} ${esc(n.venue)}</div>`:''}
+    ${n.adjusted?`<div class="chip" style="margin-top:10px;white-space:normal">${ic('warn')} an deine Tagesform angepasst</div>`:''}${n.edited?`<div class="chip" style="margin-top:10px">✏️ von dir angepasst</div>`:''}${n.venue?`<div class="chip" style="margin-top:10px;white-space:normal">${n.sport==='zwift'?'🏠':'🌳'} ${esc(n.venue)}</div>`:''}
     ${profileBars(n)}
     <div class="stats"><div class="stat"><b>${fmtDur(n.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${n.distKm?fmtKm(n.distKm)+' km':zoneOf(n.IF)}</b><span>${n.distKm?'Distanz':'Tempo'}</span></div><div class="stat"><b>${n.tss}</b><span>Belastung${Q('belastung')}</span></div></div>
     ${wxHero(n)}${(f=>f&&!f.short&&f.pack.length?`<div class="fuelbox">${esc(f.summary)}</div>`:'')(fuelPlan(n))}
     <div class="more ${openNext?'open':''}" id="nextMore"><div>${workoutDetail(n)}</div></div>
-    <div class="btnrow"><button class="btn" data-act="toggleNext">${ic(openNext?'chevd':'info')} ${openNext?'Weniger':'So geht\'s'}</button><button class="btn solid" data-done="${n.date}">${ic('check')} Erledigt</button><button class="btn" data-act="icsOne" data-k="${n.date}" aria-label="In Kalender" style="flex:0 0 48px">📅</button><button class="btn" data-act="other" data-k="${n.date}" aria-label="Anderes Training" style="flex:0 0 48px">${ic('edit')}</button></div></div>`
+    <div class="btnrow"><button class="btn" data-act="toggleNext">${ic(openNext?'chevd':'info')} ${openNext?'Weniger':'So geht\'s'}</button><button class="btn solid" data-done="${n.date}">${ic('check')} Erledigt</button><button class="btn" data-act="icsOne" data-k="${n.date}" aria-label="In Kalender" style="flex:0 0 48px">📅</button><button class="btn" data-act="editPlan" data-k="${n.date}" aria-label="Bearbeiten" style="flex:0 0 48px">${ic('edit')}</button></div></div>`
   :`<div class="card"><div class="empty">${ic('cal')}Keine Trainingstage geplant.<br>Lege im Setup deine Trainingstage fest.</div></div>`}
   <div class="grid g2" style="margin-top:12px">
     <div class="card fade" data-act="morning" style="cursor:pointer"><div class="row" style="gap:16px">${ring(R.v/100,92,9,R.c,R.v,'BEREIT')}<div class="grow"><div class="lbl">Tagesbereitschaft${Q('bereitschaft')}</div><div class="mid" style="color:${R.c}">${R.t}</div><div class="small muted">${R.neg.length?'Bremst: '+R.neg.join(', '):R.why.length?'Plus: '+R.why.join(', '):'Basis: deine Trainingsform'}</div></div></div>
@@ -1127,6 +1162,7 @@ function vAna(){
   const rides=S.sessions.filter(s=>SPORTS[s.sport].cat==='bike'&&(s.np||s.watts)&&s.date>=ymd(addD(t0,-days))).sort((a,b)=>a.date<b.date?-1:1);
   const allRuns=S.sessions.filter(s=>s.sport==='run'&&s.distKm),best=(arr,fn)=>arr.reduce((m,s)=>!m||fn(s)>fn(m)?s:m,null);
   const longest=best(allRuns,s=>s.distKm),fast5=best(allRuns.filter(s=>s.distKm>=5),s=>-s.durMin/s.distKm),fast10=best(allRuns.filter(s=>s.distKm>=10),s=>-s.durMin/s.distKm);
+  const outR=S.sessions.filter(s=>s.sport==='ride'&&s.distKm&&s.durMin),fastR=best(outR.filter(s=>s.distKm>=40),kmh),longR=best(S.sessions.filter(s=>SPORTS[s.sport]?.cat==='bike'&&s.distKm),s=>s.distKm);
   const bestW=best(S.sessions.filter(s=>SPORTS[s.sport].cat==='bike'&&s.durMin>=20&&(s.np||s.watts)),s=>+(s.np||s.watts)),mostHm=best(S.sessions.filter(s=>s.elev),s=>+s.elev);
   const bigWeek=(()=>{let b=null;for(let i=0;i<26;i++){const a=addD(ws,-7*i),w=weekAgg(a);if(!b||w.tss>b.tss)b=Object.assign(w,{a})}return b})();
   const w=weightE(),wkg=w?S.settings.ftp/w:null,thr=thrPaceRaw(),P=paces(),bp=hmPred(60);
@@ -1176,6 +1212,7 @@ function vAna(){
   <h2>${ic('ride')} Rad<span class="line"></span></h2>
   <div class="card fade"><div class="lbl">Leistung je Fahrt (W) vs. ${T('ftp','FTP')}</div>
     ${rides.length?lineChart([{v:rides.map(r=>+(r.np||r.watts)),c:sc('ride'),dots:true,line:true,w:1.6}],rides.map(r=>{const d=parse(r.date);return d.getDate()+'.'+(d.getMonth()+1)}),{h:150,hline:S.settings.ftp}):`<div class="empty">${ic('ride')}Trage Radfahrten mit Watt ein.</div>`}
+    ${(o=>o.length>=2?`<div class="lbl" style="margin-top:14px">Ø-Geschwindigkeit draußen (km/h)</div>${lineChart([{v:o.map(kmh),c:sc('ride'),dots:true,line:true,w:1.6}],o.map(r=>{const d=parse(r.date);return d.getDate()+'.'+(d.getMonth()+1)}),{h:130,fmt:v=>fmtN(v,1)})}<div class="tiny muted">Ø der letzten ${o.length} Fahrten: <b>${fmtKmh(avg(o.map(kmh)))}</b> – Wind & Höhenmeter beeinflussen das stark.</div>`:'')(S.sessions.filter(s=>s.sport==='ride'&&kmh(s)&&s.date>=ymd(addD(t0,-days))).sort((a,b)=>a.date<b.date?-1:1))}
     <div class="stats s4"><div class="stat"><b>${S.settings.ftp} W</b><span>FTP</span></div><div class="stat"><b>${wkg?fmtN(wkg,2):'–'}</b><span>W/kg</span></div><div class="stat"><b>${fmtN(av(prev4,'bike'),1)} h</b><span>Rad/Wo.</span></div><div class="stat"><b>${fmtN(sum(S.sessions.filter(s=>SPORTS[s.sport].cat==='bike'&&s.date>=ymd(addD(t0,-days))),s=>+s.elev||0),0)}</b><span>Höhenm.</span></div></div></div>
   <h2>${ic('bed')} Schlaf & Erholung<span class="line"></span></h2>
   <div class="grid g2">
@@ -1191,7 +1228,7 @@ function vAna(){
     <div class="card fade"><div class="lbl">Rad · ${T('ftp','FTP')} ${S.settings.ftp} W${LTHRB()?` · Schwelle Puls ${LTHRB()}`:''}</div><table class="z">${[[1,'Z1 Erholung'],[2,'Z2 Locker'],[3,'Z3 Zügig'],[3.5,'Sweet Spot'],[4,'Z4 Schwelle'],[5,'Z5 Sehr hart'],[6,'Z6 Sprint']].map(([z,n])=>`<tr><td><i class="zdot" style="background:${Z_COL[z]}"></i>${n}</td><td>${tgt('zwift',z)}${z<6&&bikeHR(z)?` · ${bikeHR(z)}`:''}</td></tr>`).join('')}</table><div class="tiny muted" style="margin-top:8px">🏠 Indoor nach Watt · 🌳 draußen ohne Wattmesser nach Puls. ${num(S.settings.lthrBike)?'':'Rad-Schwellenpuls geschätzt (Lauf − 5) – im Setup anpassbar.'}</div></div>
   </div>
   <h2>${ic('trophy')} Bestwerte<span class="line"></span></h2>
-  <div class="card list fade">${[['run','Längster Lauf',longest?fmtKm(longest.distKm)+' km · '+fmtDate(longest.date):'–'],['run','Schnellster Lauf ≥ 5 km',fast5?fmtPace(fast5.durMin*60/fast5.distKm)+' /km · '+fmtKm(fast5.distKm)+' km · '+fmtDate(fast5.date):'–'],['run','Schnellster Lauf ≥ 10 km',fast10?fmtPace(fast10.durMin*60/fast10.distKm)+' /km · '+fmtKm(fast10.distKm)+' km':'–'],['zwift','Höchste Leistung (≥ 20 min)',bestW?(bestW.np||bestW.watts)+' W · '+fmtDur(bestW.durMin)+' · '+fmtDate(bestW.date):'–'],['ride','Meiste Höhenmeter',mostHm?mostHm.elev+' hm · '+fmtDate(mostHm.date):'–'],['other','Stärkste Woche',bigWeek&&bigWeek.tss?Math.round(bigWeek.tss)+' Pkt. · '+fmtN(bigWeek.h,1)+' h · KW '+isoWeek(bigWeek.a):'–']].map(([k,t,m])=>`<div class="item" style="cursor:default">${sIco(k)}<div class="grow"><div class="t">${t}</div><div class="m">${m}</div></div></div>`).join('')}</div>
+  <div class="card list fade">${[['run','Längster Lauf',longest?fmtKm(longest.distKm)+' km · '+fmtDate(longest.date):'–'],['run','Schnellster Lauf ≥ 5 km',fast5?fmtPace(fast5.durMin*60/fast5.distKm)+' /km · '+fmtKm(fast5.distKm)+' km · '+fmtDate(fast5.date):'–'],['run','Schnellster Lauf ≥ 10 km',fast10?fmtPace(fast10.durMin*60/fast10.distKm)+' /km · '+fmtKm(fast10.distKm)+' km':'–'],['zwift','Höchste Leistung (≥ 20 min)',bestW?(bestW.np||bestW.watts)+' W · '+fmtDur(bestW.durMin)+' · '+fmtDate(bestW.date):'–'],['ride','Längste Fahrt',longR?fmtKm(longR.distKm)+' km · Ø '+fmtKmh(kmh(longR))+' · '+fmtDate(longR.date):'–'],['ride','Schnellster Schnitt draußen (≥ 40 km)',fastR?'Ø '+fmtKmh(kmh(fastR))+' · '+fmtKm(fastR.distKm)+' km'+(fastR.elev?' · '+fastR.elev+' hm':'')+' · '+fmtDate(fastR.date):'–'],['ride','Meiste Höhenmeter',mostHm?mostHm.elev+' hm · '+fmtDate(mostHm.date):'–'],['other','Stärkste Woche',bigWeek&&bigWeek.tss?Math.round(bigWeek.tss)+' Pkt. · '+fmtN(bigWeek.h,1)+' h · KW '+isoWeek(bigWeek.a):'–']].map(([k,t,m])=>`<div class="item" style="cursor:default">${sIco(k)}<div class="grow"><div class="t">${t}</div><div class="m">${m}</div></div></div>`).join('')}</div>
   <h2>🎬 Rückblicke<span class="line"></span></h2>
   <div class="grid g3">${wrapButtons()}</div>
   <h2>${ic('medal')} Erfolge<span class="line"></span><span class="tiny">${Object.keys(S.badges).length}/${ACH.length}</span></h2>
@@ -1418,7 +1455,7 @@ function renderForm(){
   <div class="field"><label>Sportart</label><div class="sports">${Object.entries(SPORTS).map(([k,s])=>`<div class="sp ${F.sport===k?'on':''}" data-sp="${k}" style="color:${sc(k)}">${ic(k)}<span style="color:var(--text)">${s.n}</span></div>`).join('')}</div></div>
   <div class="f2"><div class="field"><label>Datum</label><input class="inp ${o('Datum')}" type="date" data-f="date" value="${F.date}"></div><div class="field"><label>Uhrzeit</label><input class="inp" type="time" data-f="time" value="${F.time||''}"></div></div>
   <div class="field"><label>Dauer (Std. · Min.)</label><div class="f2"><input class="inp ${o('Dauer')}" inputmode="numeric" data-f="h" value="${F.h}" placeholder="0 Std."><input class="inp ${o('Dauer')}" inputmode="numeric" data-f="m" value="${F.m}" placeholder="45 Min."></div></div>
-  ${['run','bike','swim','walk'].includes(cat)?`<div class="field"><label>Distanz (km)</label><input class="inp ${o('Distanz')}" inputmode="decimal" data-f="distKm" value="${F.distKm}" placeholder="${cat==='swim'?'1,5':'10'}"></div>`:''}
+  ${['run','bike','swim','walk'].includes(cat)?`<div class="field"><label>Distanz (km)</label><input class="inp ${o('Distanz')}" inputmode="decimal" data-f="distKm" value="${F.distKm}" placeholder="${cat==='swim'?'1,5':'10'}"><div class="tiny" id="fLive" style="margin-top:6px;font-weight:800;color:var(--accentText)"></div></div>`:''}
   <div class="f2"><div class="field"><label>Ø Puls</label><input class="inp ${o('Puls')}" inputmode="numeric" data-f="hr" value="${F.hr}" placeholder="optional"></div><div class="field"><label>Max. Puls</label><input class="inp ${o('Max-Puls')}" inputmode="numeric" data-f="hrMax" value="${F.hrMax||''}" placeholder="optional"></div></div>
   ${cat==='bike'?`<div class="f3"><div class="field"><label>Ø Watt</label><input class="inp ${o('Watt')}" inputmode="numeric" data-f="watts" value="${F.watts}"></div><div class="field"><label>NP${Q('np')}</label><input class="inp ${o('NP')}" inputmode="numeric" data-f="np" value="${F.np}" placeholder="optional"></div><div class="field"><label>Höhenm.</label><input class="inp ${o('Höhenmeter')}" inputmode="numeric" data-f="elev" value="${F.elev}"></div></div>`:''}
   ${cat==='run'?`<div class="field"><label>Höhenmeter</label><input class="inp ${o('Höhenmeter')}" inputmode="numeric" data-f="elev" value="${F.elev}" placeholder="optional"></div>`:''}
@@ -1429,9 +1466,12 @@ function renderForm(){
   <div class="field"><label>Notiz</label><textarea class="inp" rows="2" data-f="note" placeholder="Wie lief's? Beine, Wetter, Strecke …">${esc(F.note)}</textarea></div>
   <button class="btn acc full" data-act="saveSess" style="padding:16px;font-size:16px">${ic('check')} Speichern & analysieren</button>
   ${F.id?`<button class="btn full" data-act="anaSess" style="margin-top:8px">🧠 Coach-Analyse ansehen</button>`:''}
-  ${F.id?`<button class="btn danger full" data-act="delSess" style="margin-top:8px">${ic('trash')} Löschen</button>`:''}`)}
+  ${F.id?`<button class="btn danger full" data-act="delSess" style="margin-top:8px">${ic('trash')} Löschen</button>`:''}`);
+  ['h','m','distKm'].forEach(f=>{const i=$(`#sheet [data-f=${f}]`);if(i)i.addEventListener('input',fLive)});fLive()}
 const rpeTxt=r=>['','sehr leicht','leicht','leicht','moderat','moderat','etwas hart','hart','sehr hart','extrem hart','maximal'][r];
 function collectForm(){$$('#sheet [data-f]').forEach(i=>F[i.dataset.f]=i.value)}
+function fLive(){const e=$('#fLive');if(!e)return;collectForm();const min=(num(F.h)||0)*60+(num(F.m)||0),km=num(F.distKm),cat=SPORTS[F.sport]?.cat;if(!min||!km){e.textContent='';return}
+  e.textContent=cat==='bike'?`⚡ Ø ${fmtKmh(km/(min/60))}`:cat==='run'||cat==='walk'?`⚡ Ø ${fmtPace(min*60/km)} /km`:cat==='swim'?`⚡ Ø ${fmtPace(min*60/(km*10))} /100 m`:''}
 function saveSess(){collectForm();const durMin=(num(F.h)||0)*60+(num(F.m)||0);if(!durMin){toast(ic('warn')+' Bitte eine Dauer eintragen');return}
   const planned=plan().find(p=>p.date===F.date);
   const s={id:F.id||uid(),date:F.date||ymd(today()),time:F.time||'',sport:F.sport,durMin,distKm:num(F.distKm),hr:num(F.hr),hrMax:num(F.hrMax),watts:num(F.watts),np:num(F.np),elev:num(F.elev),rpe:+F.rpe||5,kind:F.kind||'',together:!!F.together,note:F.note||'',gearId:F.gearId||'',fromRole:F.fromRole||'',created:F.created||Date.now()};
@@ -1481,7 +1521,8 @@ function coachAnalyze(s,planned,pre){const L=sessionLoad(s),cat=SPORTS[s.sport].
         else info.push({i:'heart',t:'Effizienz auf deinem Niveau',d:`Watt pro Herzschlag wie bei deinen letzten ${se.length} ähnlichen Fahrten.`})}}
     else if(cat==='run'&&s.distKm){const pRef=avg(sim.filter(x=>x.distKm).map(x=>x.durMin*60/x.distKm)),p=s.durMin*60/s.distKm,dd=Math.round(pRef-p);
       if(Math.abs(dd)>=5)info.push({i:'run',t:`${Math.abs(dd)} s/km ${dd>0?'schneller':'langsamer'} als ähnliche Läufe`,d:dd>0?(easy?'Schneller ist bei lockeren Läufen nicht automatisch besser – Puls im Blick behalten (Uhr-Puls eintragen hilft mir).':'Starker Schnitt!'):(easy?'Bei lockeren Läufen völlig okay.':'Heute nicht ganz dein Tempo – Tagesform.')})}}
-  else if(sim.length<2)info.push({i:'info',t:'Ich lerne dich noch kennen',d:`Für Vergleiche brauche ich ein paar ähnliche Einheiten${hr?'':' – am besten mit Ø-Puls'}. Ab 2–3 vergleichbaren Trainings sage ich dir, ob du besser wirst.`});
+  if(cat==='bike'&&kmh(s)&&sim.length>=2){const sv=sim.map(kmh).filter(Boolean);if(sv.length>=2){const d=kmh(s)-avg(sv);if(Math.abs(d)>=.8)info.push({i:'ride',t:`Ø ${fmtKmh(kmh(s))} – ${fmtN(Math.abs(d),1)} km/h ${d>0?'schneller':'langsamer'} als ähnliche Fahrten`,d:s.sport==='zwift'?'Zwift-Tempo hängt stark von Strecke und Gewicht ab – Watt sind aussagekräftiger.':d>0?'Wind, Gruppe und Strecke spielen mit – aber gutes Zeichen!':'Wind, Strecke und Ampeln machen viel aus – Puls und Gefühl zählen mehr als km/h.'})}}
+  if(sim.length<2)info.push({i:'info',t:'Ich lerne dich noch kennen',d:`Für Vergleiche brauche ich ein paar ähnliche Einheiten${hr?'':' – am besten mit Ø-Puls'}. Ab 2–3 vergleichbaren Trainings sage ich dir, ob du besser wirst.`});
   // 4) Rekorde & Meilensteine
   const prevS=S.sessions.filter(x=>x.id!==s.id&&x.date<=s.date);
   if(cat==='run'&&s.distKm){const lg=prevS.filter(x=>x.sport==='run').reduce((m,x)=>Math.max(m,x.distKm||0),0);if(lg>0&&s.distKm>lg){prog.push({i:'trophy',t:'Längster Lauf bisher!',d:`${fmtKm(s.distKm)} km – vorher ${fmtKm(lg)} km. Nächster Meilenstein: ${s.distKm<10?'10 km':s.distKm<15?'15 km':s.distKm<18?'18 km':'die volle Distanz'}.`});score+=5}
@@ -1520,8 +1561,8 @@ function showAnalysis(s,before,planned,pre){const A=coachAnalyze(s,planned,pre),
   if(before){s.coach={score:A.score,head:A.head};logProgress(s,A);save()}
   const facts=[];
   if(s.sport==='run'&&s.distKm){facts.push([fmtPace(s.durMin*60/s.distKm),'Pace /km']);const rp=riegelP(s);if(rp)facts.push([fmtTime(rp),'HM-Hochrechnung'])}
-  if(cat==='bike'&&(s.np||s.watts)){const p=+(s.np||s.watts),w=weightE();facts.push([p+' W',Math.round(p/S.settings.ftp*100)+' % FTP']);if(w)facts.push([fmtN(p/w,2),'W/kg'])}
-  if(cat==='bike'&&!(s.np||s.watts)&&s.distKm)facts.push([fmtN(s.distKm/(s.durMin/60),1),'km/h']);
+  if(cat==='bike'&&kmh(s))facts.push([fmtN(kmh(s),1),'Ø km/h']);
+  if(cat==='bike'&&(s.np||s.watts)){const p=+(s.np||s.watts),w=weightE();facts.push([p+' W',Math.round(p/S.settings.ftp*100)+' % FTP'+(w?' · '+fmtN(p/w,1)+' W/kg':'')])}
   if(s.hr)facts.push([s.hr,'Ø Puls']);
   const it=x=>`<div class="ins"><div class="dot" style="background:var(--card2);color:var(--${x.col||'accent'})">${ic(x.i)}</div><div><b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.act?`<button class="btn sm acc" style="margin-top:6px" data-act="${x.act[0]}" data-k="${x.act[1]}">${x.act[2]}</button>`:''}</div></div>`;
   const sec=(t,arr,col)=>arr.length?`<div class="lbl" style="margin-top:14px">${t}</div>${arr.map(x=>it(Object.assign({col},x))).join('')}`:'';
@@ -1547,15 +1588,15 @@ function openDay(k){
   ${pl.map(p=>`<div class="card" style="margin-top:12px;border:1px dashed ${sc(p.sport)}"><div class="row between"><span class="lbl">${p.custom?'Eigenes Training':'Geplant'} · ${SPORTS[p.sport].n}</span>${p.hard?'<span class="badge acc">⭐ wichtig</span>':''}</div>
     <div class="mid" style="margin-top:6px">${esc(p.title)}</div><div class="small muted">${esc(p.short)}</div>${profileBars(p)}
     <div class="stats"><div class="stat"><b>${fmtDur(p.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${zoneOf(p.IF)}</b><span>Tempo</span></div><div class="stat"><b>${p.tss}</b><span>Punkte${Q('belastung')}</span></div></div>
-    ${workoutDetail(p)}<div class="btnrow"><button class="btn acc" data-done="${p.date}">${ic('check')} Erledigt</button><button class="btn" data-act="rest" data-k="${k}">${ic('skip')} Ruhetag</button></div><button class="btn ghost full" style="margin-top:8px" data-act="icsOne" data-k="${k}">📅 In iPhone-Kalender${S.calExp[k]?(S.calExp[k]===p.title?' (schon exportiert ✓)':' (Plan geändert – neu exportieren)'):''}</button></div>`).join('')}
+    ${workoutDetail(p)}<div class="btnrow"><button class="btn acc" data-done="${p.date}">${ic('check')} Erledigt</button><button class="btn" data-act="editPlan" data-k="${k}">${ic('edit')} Anpassen</button><button class="btn" data-act="rest" data-k="${k}">${ic('skip')} Ruhetag</button></div><button class="btn ghost full" style="margin-top:8px" data-act="icsOne" data-k="${k}">📅 In iPhone-Kalender${S.calExp[k]?(S.calExp[k]===p.title?' (schon exportiert ✓)':' (Plan geändert – neu exportieren)'):''}</button></div>`).join('')}
   ${!ss.length&&!pl.length?`<div class="card" style="margin-top:12px"><div class="empty">${ic('bed')}${o?.kind==='rest'?'Von dir als Ruhetag markiert.':isPast?'Kein Training an diesem Tag.':'Ruhetag – Erholung ist Training.'}</div></div>`:''}
   <div class="btnrow"><button class="btn" data-newday="${k}">${ic('plus')} Eintragen</button>${!isPast?`<button class="btn" data-act="planOwn" data-k="${k}">${ic('edit')} Eigenes planen</button>`:''}</div>
   ${o?`<button class="btn ghost full" style="margin-top:8px" data-act="clearOv" data-k="${k}">${ic('sync')} Zurück zum Coach-Plan</button>`:''}`)}
 function openOther(k){openSheet(`${sheetHead('Anderes Training')}<div class="small muted" style="margin:6px 0 12px">Du entscheidest – der Plan passt sich an.</div>
   <div class="list card">${[['other','newday','Schon etwas anderes gemacht?','Eintragen (oder Screenshot) → neue Empfehlung.'],['zwift','planOwn','Eigenes Training planen','Ersetzt die Empfehlung an diesem Tag.'],['walk','rest','Heute aussetzen','Ruhetag – die Einheiten verteilen sich neu.'],['run','easier','Lockere Alternative','Statt der harten Einheit eine Erholungseinheit.']].map(([i,a,t,d])=>`<div class="item" ${a==='newday'?`data-newday="${ymd(today())}"`:`data-act="${a}" data-k="${k}"`}>${sIco(i)}<div class="grow"><div class="t">${t}</div><div class="m">${d}</div></div>${ic('chev','muted')}</div>`).join('')}</div>`)}
 let PF=null;
-function openPlanOwn(k){PF={date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:'',distKm:'',elev:'',intensity:'locker',note:'',durManual:false};renderPlanOwn()}
-function renderPlanOwn(){const cat=SPORTS[PF.sport].cat;openSheet(`${sheetHead('Eigenes Training planen')}
+function openPlanOwn(k,edit){const o=edit&&k&&S.overrides[k]?.kind==='custom'?S.overrides[k]:null;PF=o?{date:k,orig:k,sport:o.sport,title:o.autoTitle?'':(o.title||''),durMin:o.durMin||'',distKm:o.distKm||'',elev:o.elev||'',intensity:o.intensity||'locker',note:o.note||'',durManual:!o.distKm}:{date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:'',distKm:'',elev:'',intensity:'locker',note:'',durManual:false};renderPlanOwn()}
+function renderPlanOwn(){const cat=SPORTS[PF.sport].cat;openSheet(`${sheetHead(PF.orig?'Training bearbeiten':'Eigenes Training planen')}
   <div class="field"><label>Sportart</label><div class="sports">${Object.entries(SPORTS).filter(([k])=>k!=='walk').map(([k,s])=>`<div class="sp ${PF.sport===k?'on':''}" data-psp="${k}" style="color:${sc(k)}">${ic(k)}<span style="color:var(--text)">${s.n}</span></div>`).join('')}</div></div>
   <div class="field"><label>Datum</label><input class="inp" type="date" data-pf="date" value="${PF.date}" min="${ymd(today())}"></div>
   ${['run','bike','swim'].includes(cat)?`<div class="f2"><div class="field"><label>Distanz (km)</label><input class="inp" inputmode="decimal" data-pf="distKm" value="${PF.distKm}" placeholder="${cat==='bike'?'z. B. 100':'z. B. 12'}"></div><div class="field"><label>Höhenmeter</label><input class="inp" inputmode="numeric" data-pf="elev" value="${PF.elev}" placeholder="z. B. 1000"></div></div>`:''}
@@ -1564,7 +1605,7 @@ function renderPlanOwn(){const cat=SPORTS[PF.sport].cat;openSheet(`${sheetHead('
   <div class="field"><label>Intensität</label><div class="chips">${['locker','lang','hart'].map(x=>`<button class="chip ${PF.intensity===x?'on':''}" data-int="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>
   <div class="card" id="pfFuel" style="margin-top:6px">${pfFuelHTML()}</div>
   <div class="field"><label>Notiz</label><input class="inp" data-pf="note" value="${esc(PF.note)}" placeholder="optional"></div>
-  <button class="btn acc full" data-act="savePlanOwn" style="padding:15px">${ic('check')} In Plan übernehmen</button>`);
+  <button class="btn acc full" data-act="savePlanOwn" style="padding:15px">${ic('check')} ${PF.orig?'Änderungen speichern':'In Plan übernehmen'}</button>${PF.orig?`<button class="btn ghost full" style="margin-top:8px" data-act="clearOv" data-k="${PF.orig}">${ic('trash')} Eigenes Training löschen</button>`:''}`);
   $$('#sheet [data-pf]').forEach(i=>i.addEventListener('input',()=>{if(i.dataset.pf==='durMin')PF.durManual=!!i.value;collectPF();updPF()}))}
 function pfItem(){const d=PF.durManual&&num(PF.durMin)?num(PF.durMin):estDur(PF.sport,PF.distKm,PF.elev,PF.intensity)||num(PF.durMin)||null;if(!d)return null;
   return Object.assign(customItem(PF.date,{sport:PF.sport,title:PF.title,durMin:d,intensity:PF.intensity,distKm:PF.distKm,elev:PF.elev}),{date:PF.date})}
@@ -2312,6 +2353,11 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'editPlan':{const it=plan().find(x=>x.date===k);if(it&&it.custom)openPlanOwn(k,true);else openEditPlan(k);break}
+    case'epStep':epStep(k);break;
+    case'epSave':{const b=EP.b,e={key:b.key,role:b.role};if(EP.useDist&&EP.distKm!==b.distKm)e.distKm=EP.distKm;if(!EP.useDist&&EP.durMin!==b.durMin)e.durMin=EP.durMin;const r=b.steps.find(x=>x.reps);if(EP.hasReps&&r&&EP.reps!==r.reps)e.reps=EP.reps;
+      if(e.distKm||e.durMin||e.reps)S.edits[EP.k]=e;else delete S.edits[EP.k];save();closeSheet();render();toast('✏️ Training angepasst');break}
+    case'epReset':delete S.edits[EP.k];save();closeSheet();render();toast('Original wiederhergestellt');break;
     case'anaSess':{const ss=S.sessions.find(x=>x.id===F.id);if(ss)showAnalysis(ss,null,null,null);break}
     case'coachFtp':S.settings.ftp=+k;S.settings.ftpDate=ymd(today());save();_cache={};render();toast('⚡ FTP auf '+k+' W gesetzt – Zonen angepasst');el.disabled=true;el.textContent='✓ Übernommen';break;
     case'health':openHealth();break;
@@ -2373,7 +2419,7 @@ function act(a,el){const k=el?.dataset?.k;
     case'shotSleep':collectMorning();pickShot('sleep');break;
     case'delSess':if(confirmInline(el,'Wirklich löschen?')){S.deleted.push(F.id);S.sessions=S.sessions.filter(x=>x.id!==F.id);save();closeSheet();render();toast('Gelöscht')}break;
     case'planOwn':openPlanOwn(k);break;
-    case'savePlanOwn':{collectPF();if(!PF.date){toast('Datum fehlt');return}const it=pfItem();const km=num(PF.distKm),hm=num(PF.elev);const ttl=PF.title||(km?`${fmtKm(km)} km ${SPORTS[PF.sport].cat==='bike'?'Radtour':SPORTS[PF.sport].n}${hm?' · '+hm+' hm':''}`:SPORTS[PF.sport].n);S.overrides[PF.date]={kind:'custom',sport:PF.sport,title:ttl,durMin:it?it.durMin:(num(PF.durMin)||45),intensity:PF.intensity,note:PF.note,distKm:km||'',elev:hm||''};}save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
+    case'savePlanOwn':{collectPF();if(!PF.date){toast('Datum fehlt');return}const it=pfItem();const km=num(PF.distKm),hm=num(PF.elev);const ttl=PF.title||(km?`${fmtKm(km)} km ${SPORTS[PF.sport].cat==='bike'?'Radtour':SPORTS[PF.sport].n}${hm?' · '+hm+' hm':''}`:SPORTS[PF.sport].n);if(PF.orig&&PF.orig!==PF.date)delete S.overrides[PF.orig];S.overrides[PF.date]={kind:'custom',autoTitle:!PF.title,sport:PF.sport,title:ttl,durMin:it?it.durMin:(num(PF.durMin)||45),intensity:PF.intensity,note:PF.note,distKm:km||'',elev:hm||''};}save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
     case'rest':S.overrides[k]={kind:'rest'};save();closeSheet();render();toast(ic('bed')+' Ruhetag – Plan neu verteilt');break;
     case'easier':{const p=plan().find(x=>x.date===k);S.overrides[k]={kind:'custom',sport:p?.sport==='run'?'run':'zwift',title:p?.sport==='run'?'Erholungslauf':'Erholungsfahrt',durMin:30,intensity:'locker',note:'Lockere Alternative statt Schlüsseleinheit'};save();closeSheet();render();toast('Lockere Alternative eingeplant');break}
     case'clearOv':delete S.overrides[k];save();closeSheet();render();toast('Coach-Plan wiederhergestellt');break;
