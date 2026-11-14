@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='7.2';
+const KEY='velox.v1',VERSION='7.3';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -1595,24 +1595,25 @@ function openDay(k){
 function openOther(k){openSheet(`${sheetHead('Anderes Training')}<div class="small muted" style="margin:6px 0 12px">Du entscheidest – der Plan passt sich an.</div>
   <div class="list card">${[['other','newday','Schon etwas anderes gemacht?','Eintragen (oder Screenshot) → neue Empfehlung.'],['zwift','planOwn','Eigenes Training planen','Ersetzt die Empfehlung an diesem Tag.'],['walk','rest','Heute aussetzen','Ruhetag – die Einheiten verteilen sich neu.'],['run','easier','Lockere Alternative','Statt der harten Einheit eine Erholungseinheit.']].map(([i,a,t,d])=>`<div class="item" ${a==='newday'?`data-newday="${ymd(today())}"`:`data-act="${a}" data-k="${k}"`}>${sIco(i)}<div class="grow"><div class="t">${t}</div><div class="m">${d}</div></div>${ic('chev','muted')}</div>`).join('')}</div>`)}
 let PF=null;
-function openPlanOwn(k,edit){const o=edit&&k&&S.overrides[k]?.kind==='custom'?S.overrides[k]:null;PF=o?{date:k,orig:k,sport:o.sport,title:o.autoTitle?'':(o.title||''),durMin:o.durMin||'',distKm:o.distKm||'',elev:o.elev||'',intensity:o.intensity||'locker',note:o.note||'',durManual:!o.distKm}:{date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:'',distKm:'',elev:'',intensity:'locker',note:'',durManual:false};renderPlanOwn()}
+function openPlanOwn(k,edit){const o=edit&&k&&S.overrides[k]?.kind==='custom'?S.overrides[k]:null;PF=o?{date:k,orig:k,sport:o.sport,title:o.autoTitle?'':(o.title||''),durMin:o.est==='dur'?'':(o.durMin||''),distKm:o.est==='km'?'':(o.distKm||''),elev:o.elev||'',intensity:o.intensity||'locker',note:o.note||'',durManual:!o.distKm}:{date:k||ymd(addD(today(),S.sessions.some(s=>s.date===ymd(today()))?1:0)),sport:'run',title:'',durMin:'',distKm:'',elev:'',intensity:'locker',note:'',durManual:false};renderPlanOwn()}
 function renderPlanOwn(){const cat=SPORTS[PF.sport].cat;openSheet(`${sheetHead(PF.orig?'Training bearbeiten':'Eigenes Training planen')}
   <div class="field"><label>Sportart</label><div class="sports">${Object.entries(SPORTS).filter(([k])=>k!=='walk').map(([k,s])=>`<div class="sp ${PF.sport===k?'on':''}" data-psp="${k}" style="color:${sc(k)}">${ic(k)}<span style="color:var(--text)">${s.n}</span></div>`).join('')}</div></div>
   <div class="field"><label>Datum</label><input class="inp" type="date" data-pf="date" value="${PF.date}" min="${ymd(today())}"></div>
   ${['run','bike','swim'].includes(cat)?`<div class="f2"><div class="field"><label>Distanz (km)</label><input class="inp" inputmode="decimal" data-pf="distKm" value="${PF.distKm}" placeholder="${cat==='bike'?'z. B. 100':'z. B. 12'}"></div><div class="field"><label>Höhenmeter</label><input class="inp" inputmode="numeric" data-pf="elev" value="${PF.elev}" placeholder="z. B. 1000"></div></div>`:''}
-  <div class="field"><label>Dauer (min)</label><input class="inp" inputmode="numeric" data-pf="durMin" value="${PF.durMin}" placeholder="wird aus Distanz geschätzt"></div>
+  <div class="field"><label>Dauer (min)</label><input class="inp" inputmode="numeric" data-pf="durMin" value="${PF.durMin}" placeholder="oder Distanz eingeben"></div>
   <div class="field"><label>Titel</label><input class="inp" data-pf="title" value="${esc(PF.title)}" placeholder="z. B. Radtour Eifel, Parkrun, Gruppenausfahrt"></div>
   <div class="field"><label>Intensität</label><div class="chips">${['locker','lang','hart'].map(x=>`<button class="chip ${PF.intensity===x?'on':''}" data-int="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>
   <div class="card" id="pfFuel" style="margin-top:6px">${pfFuelHTML()}</div>
   <div class="field"><label>Notiz</label><input class="inp" data-pf="note" value="${esc(PF.note)}" placeholder="optional"></div>
   <button class="btn acc full" data-act="savePlanOwn" style="padding:15px">${ic('check')} ${PF.orig?'Änderungen speichern':'In Plan übernehmen'}</button>${PF.orig?`<button class="btn ghost full" style="margin-top:8px" data-act="clearOv" data-k="${PF.orig}">${ic('trash')} Eigenes Training löschen</button>`:''}`);
-  $$('#sheet [data-pf]').forEach(i=>i.addEventListener('input',()=>{if(i.dataset.pf==='durMin')PF.durManual=!!i.value;collectPF();updPF()}))}
-function pfItem(){const d=PF.durManual&&num(PF.durMin)?num(PF.durMin):estDur(PF.sport,PF.distKm,PF.elev,PF.intensity)||num(PF.durMin)||null;if(!d)return null;
-  return Object.assign(customItem(PF.date,{sport:PF.sport,title:PF.title,durMin:d,intensity:PF.intensity,distKm:PF.distKm,elev:PF.elev}),{date:PF.date})}
+  $$('#sheet [data-pf]').forEach(i=>i.addEventListener('input',()=>{collectPF();updPF()}));updPF()}
+function pfItem(){const r=pfResolve();if(!r||!r.dur)return null;
+  return Object.assign(customItem(PF.date,{sport:PF.sport,title:PF.title,durMin:r.dur,intensity:PF.intensity,distKm:r.km||'',elev:PF.elev}),{date:PF.date})}
 function pfFuelHTML(){const it=pfItem();if(!it)return`<div class="small muted">🍌 Gib Distanz oder Dauer ein – dann bekommst du hier Dauer-Schätzung und Verpflegungsplan.</div>`;
-  const est=!PF.durManual&&PF.distKm?`<div class="small"><b>⏱ Geschätzt: ${fmtDur(it.durMin)}</b> <span class="muted">· ~${it.tss} Belastungspunkte</span></div>`:`<div class="small"><b>⏱ ${fmtDur(it.durMin)}</b> <span class="muted">· ~${it.tss} Belastungspunkte</span></div>`;
+  const r=pfResolve(),M=r.M,cat=SPORTS[PF.sport].cat,flat=cat==='run'?fmtPace(M.a*3600)+' /km':fmtKmh(1/M.a),why=M.src==='Historie'?`aus deinen letzten ${M.n} ${cat==='run'?'lockeren Läufen':'Fahrten'} (flach ~${flat}${M.b&&cat!=='swim'?`, +${Math.round(M.b*60*100)} min je 100 hm`:''})`:'aus Standardwerten – wird mit jeder eingetragenen Einheit genauer';
+  const est=`<div class="small">${r.est==='dur'?`<b>⏱ Geschätzt: ${fmtDur(it.durMin)}</b>`:r.est==='km'?(r.km?`<b>📏 Geschätzt: ~${fmtKm(r.km)} km</b> in ${fmtDur(it.durMin)}`:'<b>⚠️ Für so viele Höhenmeter reicht die Zeit kaum</b>'):`<b>⏱ ${fmtDur(it.durMin)} · ${fmtKm(r.km)} km</b>`}${r.km&&it.durMin?` <span class="muted">· Ø ${cat==='run'?fmtPace(it.durMin*60/r.km)+' /km':fmtKmh(r.km/(it.durMin/60))}</span>`:''} <span class="muted">· ~${it.tss} Punkte</span></div>${r.est?`<div class="tiny muted" style="margin-top:3px">${why}</div>`:''}`;
   return est+fuelHTML(it).replace('<h4>','<h4 style="margin:10px 0 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;opacity:.75">')}
-function updPF(){const e=$('#pfFuel');if(e)e.innerHTML=pfFuelHTML()}
+function updPF(){const e=$('#pfFuel');if(e)e.innerHTML=pfFuelHTML();const r=pfResolve(),di=$('#sheet [data-pf=distKm]'),du=$('#sheet [data-pf=durMin]');if(di)di.placeholder=r&&r.est==='km'&&r.km?'≈ '+fmtKm(r.km)+' (geschätzt)':(SPORTS[PF.sport].cat==='bike'?'z. B. 100':'z. B. 12');if(du)du.placeholder=r&&r.est==='dur'?'≈ '+r.dur+' (geschätzt)':'oder Distanz eingeben'}
 let MF=null;
 function openMorning(k){k=k||ymd(today());const d=S.daily[k]||{};MF=Object.assign({k,sh:d.sleepMin?Math.floor(d.sleepMin/60):'',sm:d.sleepMin?d.sleepMin%60:'',sleepScore:d.sleepScore||'',rhr:d.rhr||'',hrv:d.hrv||'',weight:d.weight||'',legs:d.legs||0,energy:d.energy||0});renderMorning()}
 function renderMorning(){const o=k=>MF.ocr&&MF.ocr.includes(k)?'ocr':'',fc=(f)=>`<div class="faces" data-mf="${f}">${['😫','😕','😐','🙂','😃'].map((e,i)=>`<button data-v="${i+1}" class="${MF[f]===i+1?'on':''}">${e}</button>`).join('')}</div>`;
@@ -2037,6 +2038,24 @@ function fuelHTML(p){const f=fuelPlan(p);if(!f)return p.fuel?`<h4>${ic('coffee')
   ${f.after.length?`<div style="font-weight:800">Danach:</div><ul style="margin:2px 0">${f.after.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`}
 function fuelText(p){const f=fuelPlan(p);if(!f)return'';return`\nVerpflegung (${f.info}):\n${f.pack.map(x=>'• '+x).join('\n')}${f.tl.length?'\nUnterwegs: '+f.tl.map(([t,x])=>fmtClock(t)+' '+x).join(' · '):''}`}
 // Dauer-Schätzung für eigene Einheiten
+/* Tempo-Modell aus deiner Historie: Zeit = a·km + b·Höhenmeter (a in h/km, b in h/m) */
+function speedModel(sport){return memo('spd_'+sport,()=>{const cat=SPORTS[sport]?.cat,lim=ymd(addD(today(),-365));
+  const D={ride:[1/26,.0004],zwift:[1/30,.0003],run:[(paces().thr*1.25)/3600,.01/60],swim:[25/60,0]}[cat==='bike'?sport:cat]||[1/25,.0004];
+  const rows=S.sessions.filter(x=>x.sport===sport&&num(x.distKm)>=(cat==='run'?3:10)&&x.durMin>=(cat==='run'?15:30)&&x.date>=lim&&(cat!=='run'||isEasyS(x))).map(x=>({k:num(x.distKm),h:num(x.elev)||0,t:x.durMin/60,e:num(x.elev)>0}));
+  let a=D[0],b=D[1],src='Standardwerte',n=rows.length;
+  const re=rows.filter(r=>r.e);
+  const rat=re.map(r=>r.h/r.k),mr=rat.length?avg(rat):0,sd=rat.length?Math.sqrt(avg(rat.map(x=>(x-mr)**2))):0;
+  if(cat==='bike'&&re.length>=5&&sd>=3){const Skk=sum(re,r=>r.k*r.k),Shh=sum(re,r=>r.h*r.h),Skh=sum(re,r=>r.k*r.h),Stk=sum(re,r=>r.t*r.k),Sth=sum(re,r=>r.t*r.h),det=Skk*Shh-Skh*Skh;
+    if(det>0){const A=(Stk*Shh-Sth*Skh)/det,B=(Sth*Skk-Stk*Skh)/det;if(A>0){b=Math.max(B,D[1]*.5);a=(sum(re,r=>r.t)-b*sum(re,r=>r.h))/sum(re,r=>r.k);if(a>0)src='Historie';else{a=D[0];b=D[1]}}}}
+  if(src!=='Historie'&&rows.length>=2){b=D[1];const A=(sum(rows,r=>r.t)-b*sum(rows,r=>r.h))/sum(rows,r=>r.k);if(A>0){a=A;src='Historie'}}
+  if(cat==='bike'){a=clamp(a,1/40,1/16);b=clamp(b,0,.0012)}if(cat==='run'){a=clamp(a,180/3600,480/3600);b=clamp(b,0,.03/60)}
+  return{a,b,n,src}})}
+function intF(sport,int){const cat=SPORTS[sport]?.cat;if(cat==='run')return int==='hart'?(paces().thr*1.04/3600)/speedModel(sport).a:int==='lang'?1.03:1;return int==='hart'?.93:int==='lang'?1.03:1}
+function pfResolve(){const km=num(PF.distKm),hm=num(PF.elev)||0,d=num(PF.durMin);if(!km&&!d)return null;
+  const M=speedModel(PF.sport),f=intF(PF.sport,PF.intensity);
+  if(km&&d)return{km,dur:d,est:null,M};
+  if(km)return{km,dur:Math.max(5,Math.round((M.a*km+M.b*hm)*f*60)),est:'dur',M};
+  const k=(d/60/f-M.b*hm)/M.a;return{km:k>0?Math.round(k*(k<20?10:2))/(k<20?10:2):null,dur:d,est:'km',M}}
 function estDur(sport,km,hm,int){km=num(km)||0;hm=num(hm)||0;if(!km)return null;const cat=SPORTS[sport]?.cat;
   if(cat==='bike'){const v=sport==='zwift'?30:int==='hart'?30:int==='lang'?27:26;return Math.round((km/v+hm*.0004)*60)}
   if(cat==='run'){const P=paces(),pace=int==='hart'?P.thr*1.03:P.thr*1.25;return Math.round(km*pace/60+hm/100)}
@@ -2419,7 +2438,7 @@ function act(a,el){const k=el?.dataset?.k;
     case'shotSleep':collectMorning();pickShot('sleep');break;
     case'delSess':if(confirmInline(el,'Wirklich löschen?')){S.deleted.push(F.id);S.sessions=S.sessions.filter(x=>x.id!==F.id);save();closeSheet();render();toast('Gelöscht')}break;
     case'planOwn':openPlanOwn(k);break;
-    case'savePlanOwn':{collectPF();if(!PF.date){toast('Datum fehlt');return}const it=pfItem();const km=num(PF.distKm),hm=num(PF.elev);const ttl=PF.title||(km?`${fmtKm(km)} km ${SPORTS[PF.sport].cat==='bike'?'Radtour':SPORTS[PF.sport].n}${hm?' · '+hm+' hm':''}`:SPORTS[PF.sport].n);if(PF.orig&&PF.orig!==PF.date)delete S.overrides[PF.orig];S.overrides[PF.date]={kind:'custom',autoTitle:!PF.title,sport:PF.sport,title:ttl,durMin:it?it.durMin:(num(PF.durMin)||45),intensity:PF.intensity,note:PF.note,distKm:km||'',elev:hm||''};}save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
+    case'savePlanOwn':{collectPF();if(!PF.date){toast('Datum fehlt');return}const it=pfItem(),rs=pfResolve();const km=rs&&rs.km?rs.km:num(PF.distKm),hm=num(PF.elev);const ttl=PF.title||(km?`${fmtKm(km)} km ${SPORTS[PF.sport].cat==='bike'?'Radtour':SPORTS[PF.sport].n}${hm?' · '+hm+' hm':''}`:SPORTS[PF.sport].n);if(PF.orig&&PF.orig!==PF.date)delete S.overrides[PF.orig];S.overrides[PF.date]={kind:'custom',autoTitle:!PF.title,sport:PF.sport,title:ttl,durMin:it?it.durMin:(num(PF.durMin)||45),intensity:PF.intensity,note:PF.note,distKm:km||'',elev:hm||'',est:rs?rs.est:null};}save();closeSheet();render();toast(ic('check')+' Eingeplant – Plan angepasst');break;
     case'rest':S.overrides[k]={kind:'rest'};save();closeSheet();render();toast(ic('bed')+' Ruhetag – Plan neu verteilt');break;
     case'easier':{const p=plan().find(x=>x.date===k);S.overrides[k]={kind:'custom',sport:p?.sport==='run'?'run':'zwift',title:p?.sport==='run'?'Erholungslauf':'Erholungsfahrt',durMin:30,intensity:'locker',note:'Lockere Alternative statt Schlüsseleinheit'};save();closeSheet();render();toast('Lockere Alternative eingeplant');break}
     case'clearOv':delete S.overrides[k];save();closeSheet();render();toast('Coach-Plan wiederhergestellt');break;
