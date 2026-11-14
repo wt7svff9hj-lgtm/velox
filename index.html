@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.8';
+const KEY='velox.v1',VERSION='6.9';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -645,7 +645,7 @@ function learn(){return memo('learn',()=>{
   if(times.length>=5){const b={Morgens:0,Mittags:0,Nachmittags:0,Abends:0};times.forEach(h=>b[h<11?'Morgens':h<15?'Mittags':h<18?'Nachmittags':'Abends']++);r.timeOfDay=Object.entries(b).sort((a,c)=>c[1]-a[1])[0][0];r.lateHard=ss.filter(s=>s.time&&+s.time.split(':')[0]>=20&&isHardSession(s)).length}
   const q=S.sessions.filter(s=>s.date>=ymd(addD(today(),-42))&&(['intervals','tempo'].includes(s.kind)||s.fromRole==='quality')&&s.rpe);
   r.qRpe=q.length>=3?avg(q.map(s=>s.rpe)):null;r.paceAdj=r.qRpe==null?1:r.qRpe>8.4?1.02:r.qRpe<6.2?.985:1;
-  const withSleep=S.sessions.filter(s=>s.rpe&&S.daily[s.date]?.sleepMin&&s.sport!=='walk');
+  const withSleep=S.sessions.filter(s=>s.rpe&&!s.rpeEst&&S.daily[s.date]?.sleepMin&&s.sport!=='walk');
   const lo=withSleep.filter(s=>S.daily[s.date].sleepMin<420),hi=withSleep.filter(s=>S.daily[s.date].sleepMin>=420);
   if(lo.length>=3&&hi.length>=3){r.sleepRpe=[avg(lo.map(s=>s.rpe)),avg(hi.map(s=>s.rpe))]}
   let planned=0,done=0;const byWdC=[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]];
@@ -1028,6 +1028,7 @@ function openSug(k){const x=suggestions().find(y=>y.k===k);if(!x)return;const la
   <button class="btn acc full" style="margin-top:12px" data-act="sugOk" data-k="${k}">${ic('check')} ${labels[k]} übernehmen</button><button class="btn ghost full" style="margin-top:8px" data-act="sugNo" data-k="${k}">Ignorieren</button>`)}
 function todos(){const st=S.settings,t=ymd(today()),h=new Date().getHours(),out=[],L=learn();
   if(st.sleepTrack&&h>=4&&!S.daily[t]?.sleepMin&&!S.daily[t]?.skip)out.push({i:'bed',t:'Morgen-Check: Schlaf eintragen',d:'Schlafdauer, Ruhepuls & Gefühl – gern per Screenshot deiner Uhr.',a:'morning'});
+  if(!S.meta.healthImp&&st.onboarded)out.push({i:'heart',t:'Apple Health importieren',d:'Alle Trainings, Ruhepuls & Schlaf auf einen Schlag übernehmen – statt Screenshots.',a:'health'});
   if(!st.onboarded)out.push({i:'user',t:'Ersteinrichtung abschließen',d:'Ein paar Angaben machen Zonen und Plan deutlich genauer.',a:'wizard'});
   const miss=[];if(!st.name)miss.push('Name');if(!hrMaxE())miss.push('Max-Puls');if(!st.hrRest&&!baseline('rhr',30))miss.push('Ruhepuls');if(!st.targetTime)miss.push('Zielzeit');
   if(st.onboarded&&miss.length)out.push({i:'edit',t:'Profil vervollständigen',d:'Fehlt noch: '+miss.join(', '),a:'gotoSet'});
@@ -1267,7 +1268,7 @@ function vSet(){
     <div class="btnrow"><button class="btn acc" data-act="syncSetup">${ic('sync')} ${st.sync.gistId?'Verbinden & synchronisieren':'Sync einrichten'}</button>${syncReady()?`<button class="btn ghost" data-act="syncOff">Trennen</button>`:''}</div>
     <div class="tiny muted" style="margin-top:10px">⚠️ Passwort vergessen = Cloud-Daten nicht mehr lesbar. Die Daten auf deinem Gerät bleiben erhalten.</div></div>
   <h2>${ic('db')} Daten<span class="line"></span></h2>
-  <div class="card"><div class="row wrapf"><button class="btn sm" data-act="export">${ic('download')} Export</button><button class="btn sm" data-act="import">${ic('upload')} Import</button><button class="btn sm danger" data-act="wipe">${ic('trash')} Alles löschen</button></div>
+  <div class="card"><button class="btn acc full" data-act="health" style="margin-bottom:10px">🍎 Apple Health importieren</button><div class="tiny muted" style="margin:-2px 0 10px">${S.meta.healthImp?'Zuletzt importiert: '+fmtDate(S.meta.healthImp,{day:'numeric',month:'short'})+' – beim nächsten Mal geht\'s ab dort weiter.':'Alle Trainings, Ruhepuls, HRV, Schlaf & Gewicht auf einmal übernehmen.'}</div><div class="row wrapf"><button class="btn sm" data-act="export">${ic('download')} Export</button><button class="btn sm" data-act="import">${ic('upload')} Import</button><button class="btn sm danger" data-act="wipe">${ic('trash')} Alles löschen</button></div>
   <div class="tiny muted" style="margin-top:10px">${S.sessions.length} Einheiten · ${Object.keys(S.daily).length} Tages-Checks gespeichert. Screenshots werden nie gespeichert.</div></div>`}
 function syncBadge(big){const st=syncReady()?syncState:'off';return`<button class="syncb ${st}" data-act="syncInfo" aria-label="Sync-Status" ${big?'style="width:48px;height:48px;font-size:23px"':''}><span>👟</span></button>`}
 
@@ -1738,6 +1739,127 @@ function openForecast(){const F=hmForecast();if(!F){toast('Noch keine Laufdaten'
   <h4>🔎 Woher kommt die Zahl?</h4><div class="small muted">${src?`Basis: dein ${src.kind==='race'?'Test/Wettkampf':'Lauf'} vom ${fmtDate(src.date,{day:'numeric',month:'short'})} (${fmtKm(src.distKm)} km in ${fmtTime(src.durMin*60)}), hochgerechnet auf 21,1 km${src.kind==='race'?'':' mit 3 % Renntag-Bonus'}. `:'Basis: deine 5-km-Zeit aus dem Setup. '}Die Kurve nimmt an, dass du dich jede Woche ein kleines Stück verbesserst – je regelmäßiger du läufst, desto steiler. Bessere Daten = bessere Prognose: alle 6–8 Wochen ein 5-km-Test.</div>`)}
 
 /* =====================================================================
+   APPLE HEALTH IMPORT – läuft komplett lokal, streamt auch riesige Exporte
+   ===================================================================== */
+let HI={from:'',opt:{w:true,walk:false,rhr:true,sleep:true,weight:true},busy:false,res:null,err:''};
+function hiDate(s){return new Date(s.replace(' ','T').replace(/ ?([+-]\d\d)(\d\d)$/,'$1:$2'))}
+async function zipEntry(file){
+  const rd=async(a,b)=>new DataView(await file.slice(a,b).arrayBuffer());
+  const tl=Math.min(file.size,66000),tail=await rd(file.size-tl,file.size);
+  let e=-1;for(let i=tl-22;i>=0;i--)if(tail.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)throw new Error('Das ist keine gültige Zip-Datei.');
+  let cdSize=tail.getUint32(e+12,true),cdOff=tail.getUint32(e+16,true);
+  if(cdOff===0xFFFFFFFF||cdSize===0xFFFFFFFF){const l=e-20;if(l>=0&&tail.getUint32(l,true)===0x07064b50){const zo=Number(tail.getBigUint64(l+8,true)),z=await rd(zo,zo+56);cdSize=Number(z.getBigUint64(40,true));cdOff=Number(z.getBigUint64(48,true))}}
+  const cd=await rd(cdOff,cdOff+cdSize),dec=new TextDecoder();let p=0;const xs=[];
+  while(p+46<=cd.byteLength&&cd.getUint32(p,true)===0x02014b50){
+    const method=cd.getUint16(p+10,true);let comp=cd.getUint32(p+20,true),unc=cd.getUint32(p+24,true),off=cd.getUint32(p+42,true);
+    const nl=cd.getUint16(p+28,true),el=cd.getUint16(p+30,true),cl=cd.getUint16(p+32,true);
+    const name=dec.decode(new Uint8Array(cd.buffer,cd.byteOffset+p+46,nl));
+    let q=p+46+nl;const qe=q+el;
+    while(q+4<=qe){const id=cd.getUint16(q,true),sz=cd.getUint16(q+2,true);if(id===1){let r=q+4;if(unc===0xFFFFFFFF){unc=Number(cd.getBigUint64(r,true));r+=8}if(comp===0xFFFFFFFF){comp=Number(cd.getBigUint64(r,true));r+=8}if(off===0xFFFFFFFF)off=Number(cd.getBigUint64(r,true))}q+=4+sz}
+    if(/\.xml$/i.test(name)&&!/__MACOSX|_cda|cda\.xml/i.test(name))xs.push({name,method,comp,unc,off,base:name.split('/').pop().toLowerCase()});
+    p+=46+nl+el+cl}
+  const best=xs.find(x=>x.base==='export.xml')||xs.sort((a,b)=>b.unc-a.unc)[0];
+  if(!best)throw new Error('In der Zip steckt keine export.xml – ist das wirklich der Health-Export?');
+  const lh=await rd(best.off,best.off+30);best.start=best.off+30+lh.getUint16(26,true)+lh.getUint16(28,true);return best}
+async function healthParse(file,from,onP){
+  let stream,total;
+  if(/\.xml$/i.test(file.name)||/xml/.test(file.type)){stream=file.stream();total=file.size}
+  else{const e=await zipEntry(file);const sl=file.slice(e.start,e.start+e.comp);total=e.comp;
+    if(e.method===0)stream=sl.stream();else{if(typeof DecompressionStream==='undefined')throw new Error('NODECOMP');stream=sl.stream();stream.__dec=true}}
+  let done=0;const dec=stream.__dec;
+  let st=stream.pipeThrough(new TransformStream({transform(ch,c){done+=ch.byteLength;c.enqueue(ch)}}));
+  if(dec)st=st.pipeThrough(new DecompressionStream('deflate-raw'));
+  const rd=st.getReader(),td=new TextDecoder();
+  const re=/<(\/?)(Workout|WorkoutStatistics|MetadataEntry|Record)\b([^>]*)>/g;
+  const at=(s,k)=>{const i=s.indexOf(' '+k+'="');if(i<0)return null;const j=i+k.length+3;return s.slice(j,s.indexOf('"',j))};
+  const W=[],D={},SL={},HV={};let cur=null,buf='',lastP=0,first=null,lastD=null,nRec=0;
+  const day=k=>D[k]=D[k]||{};
+  const fin=()=>{if(cur&&cur.sd&&cur.sd.slice(0,10)>=from)W.push(cur);cur=null};
+  for(;;){const{value,done:end}=await rd.read();if(value)buf+=td.decode(value,{stream:true});if(end)buf+=td.decode();
+    re.lastIndex=0;let m,pos=0;
+    while((m=re.exec(buf))){pos=re.lastIndex;const cl=m[1],tag=m[2],a=m[3];
+      if(tag==='Record'){if(cl)continue;nRec++;
+        const ti=a.indexOf('type="')+6,t=a.slice(ti,a.indexOf('"',ti));
+        if(t!=='HKQuantityTypeIdentifierRestingHeartRate'&&t!=='HKQuantityTypeIdentifierHeartRateVariabilitySDNN'&&t!=='HKQuantityTypeIdentifierBodyMass'&&t!=='HKCategoryTypeIdentifierSleepAnalysis')continue;
+        const sd=at(a,'startDate');if(!sd)continue;const k=sd.slice(0,10);
+        if(t==='HKCategoryTypeIdentifierSleepAnalysis'){const v=at(a,'value')||'';if(!/Asleep/.test(v))continue;const ed=at(a,'endDate');if(!ed)continue;const nk=ed.slice(0,10);if(nk<from)continue;const eh=+ed.slice(11,13);if(eh>=15)continue;
+          const dur=(hiDate(ed)-hiDate(sd))/60000;if(!(dur>0&&dur<1000))continue;const src=at(a,'sourceName')||'?';SL[nk]=SL[nk]||{};SL[nk][src]=(SL[nk][src]||0)+dur;continue}
+        if(k<from)continue;const v=parseFloat(at(a,'value'));if(!isFinite(v))continue;
+        if(t==='HKQuantityTypeIdentifierRestingHeartRate'){const d=day(k);d.rhr=d.rhr?Math.min(d.rhr,Math.round(v)):Math.round(v)}
+        else if(t==='HKQuantityTypeIdentifierHeartRateVariabilitySDNN'){HV[k]=HV[k]||[];HV[k].push(v)}
+        else{const u=at(a,'unit');day(k).weight=Math.round((u==='lb'?v*.45359:v)*10)/10}
+        continue}
+      if(tag==='Workout'){if(cl){fin();continue}
+        cur={type:(at(a,'workoutActivityType')||'').replace('HKWorkoutActivityType',''),dur:parseFloat(at(a,'duration')),du:at(a,'durationUnit')||'min',dist:parseFloat(at(a,'totalDistance')),dU:at(a,'totalDistanceUnit'),src:at(a,'sourceName')||'',sd:at(a,'startDate'),ed:at(a,'endDate'),indoor:false};
+        if(/\/\s*$/.test(a))fin();continue}
+      if(!cur)continue;
+      if(tag==='WorkoutStatistics'&&!cl){const t=at(a,'type')||'';
+        if(t.endsWith('HeartRate')){const av=parseFloat(at(a,'average')),mx=parseFloat(at(a,'maximum'));if(av)cur.hr=Math.round(av);if(mx)cur.hrMax=Math.round(mx)}
+        else if(/Distance(WalkingRunning|Cycling|Swimming)$/.test(t)){const s=parseFloat(at(a,'sum'));if(s){cur.dist=s;cur.dU=at(a,'unit')}}
+        else if(t.endsWith('CyclingPower')){const av=parseFloat(at(a,'average'));if(av)cur.watts=Math.round(av)}}
+      else if(tag==='MetadataEntry'&&!cl){const k=at(a,'key'),v=at(a,'value')||'';
+        if(k==='HKIndoorWorkout')cur.indoor=v==='1';else if(k==='HKElevationAscended'){const n=parseFloat(v);if(n)cur.elev=Math.round(/cm/.test(v)?n/100:/ft/.test(v)?n*.3048:n)}}}
+    const lt=buf.lastIndexOf('<');buf=lt>=pos?buf.slice(lt):'';
+    if(onP&&Date.now()-lastP>200){lastP=Date.now();onP(Math.min(.99,done/total),W.length);await new Promise(r=>setTimeout(r,0))}
+    if(end)break}
+  Object.entries(SL).forEach(([k,o])=>{const m=Math.max(...Object.values(o));if(m>=120)day(k).sleepMin=Math.round(m)});
+  Object.entries(HV).forEach(([k,a])=>{day(k).hrv=Math.round(avg(a))});
+  return{W,D,nRec}}
+function hiMap(w){const t=w.type,cyc=t==='Cycling'||t==='HandCycling';
+  let sport=t==='Running'?'run':cyc?(w.indoor||/zwift|rouvy|wahoo systm|trainerroad/i.test(w.src)?'zwift':'ride'):t==='Swimming'?'swim':/Walking|Hiking/.test(t)?'walk':/Strength|CoreTraining|HighIntensityIntervalTraining|CrossTraining|Functional/.test(t)?'strength':'other';
+  const durMin=Math.round(w.du==='s'||w.du==='sec'?w.dur/60:w.du==='hr'||w.du==='h'?w.dur*60:w.dur);
+  let km=w.dist||null;if(km){const u=(w.dU||'km').toLowerCase();km=u==='mi'?km*1.60934:u==='m'?km/1000:u==='yd'?km*.0009144:km;km=Math.round(km*100)/100}
+  const s={id:uid(),hid:w.sd,src:'health',date:w.sd.slice(0,10),time:w.sd.slice(11,16),sport,durMin,distKm:km,hr:w.hr||null,hrMax:w.hrMax||null,watts:sport==='zwift'||sport==='ride'?(w.watts||null):null,np:null,elev:w.elev||null,kind:'',together:false,note:'Aus Apple Health'+(w.src?' · '+w.src:''),gearId:'',fromRole:'',created:Date.now(),_end:w.ed};
+  const L=sport==='run'?LTHR():LTHRB();
+  if(s.hr&&L){const r=s.hr/L;s.rpe=r<.8?3:r<.87?4:r<.92?5:r<.96?6:r<1?7:r<1.03?8:9;s.rpeEst=true}else{s.rpe=sport==='walk'?2:5;s.rpeEst=true}
+  if(sport==='run')s.kind=durMin>=75?'long':s.rpe<=5?'easy':'';else if(SPORTS[sport].cat==='bike')s.kind=durMin>=150?'long':s.rpe<=5?'easy':'';
+  return s}
+function hiBuild(R){const o=HI.opt;let list=R.W.map(hiMap).filter(s=>s.durMin>=5).filter(s=>s.sport==='walk'?o.walk:true).sort((a,b)=>a.hid<b.hid?-1:1);
+  // Doppelte im Export (z. B. Zwift + Watch gleichzeitig) zusammenführen
+  const out=[];let merged=0;list.forEach(s=>{const p=out[out.length-1];
+    if(p&&SPORTS[p.sport].cat===SPORTS[s.sport].cat&&p.date===s.date&&hiDate(s.hid)<hiDate(p._end)){['hr','hrMax','watts','elev','distKm'].forEach(k=>{if(!p[k]&&s[k])p[k]=s[k]});if(s.sport==='zwift')p.sport='zwift';p.durMin=Math.max(p.durMin,s.durMin);merged++}
+    else out.push(s)});
+  // gegen vorhandene Einheiten prüfen
+  let dup=0;const fresh=out.filter(s=>{const ex=S.sessions.find(x=>x.hid===s.hid||(x.date===s.date&&SPORTS[x.sport]?.cat===SPORTS[s.sport].cat&&(x.time&&s.time?Math.abs((+x.time.slice(0,2)*60+ +x.time.slice(3))-(+s.time.slice(0,2)*60+ +s.time.slice(3)))<45:Math.abs(x.durMin-s.durMin)<=Math.max(8,s.durMin*.2))));if(ex){dup++;return false}return true});
+  const days=Object.entries(R.D);const cnt=f=>days.filter(([k,v])=>v[f]!=null).length;
+  return{list:fresh,dup,merged,rhr:o.rhr?cnt('rhr'):0,hrv:o.rhr?cnt('hrv'):0,sleep:o.sleep?cnt('sleepMin'):0,weight:o.weight?cnt('weight'):0,D:R.D,total:R.W.length,nRec:R.nRec}}
+function openHealth(){HI.from=HI.from||S.meta.healthLast||ymd(addD(today(),-180));HI.res=null;HI.err='';HI.busy=false;renderHealth()}
+function renderHealth(){const o=HI.opt,r=HI.res;
+  const tg=(k,l,d)=>`<div class="tog"><span class="small"><b>${l}</b>${d?`<br><span class="muted">${d}</span>`:''}</span><button class="sw ${o[k]?'on':''}" data-act="hiTog" data-k="${k}"></button></div>`;
+  if(r){const by={};r.list.forEach(s=>by[s.sport]=(by[s.sport]||0)+1);
+    openSheet(`${sheetHead('Apple Health · Vorschau')}
+    <div class="card" style="margin-top:6px"><div class="stats"><div class="stat"><b>${r.list.length}</b><span>neue Einheiten</span></div><div class="stat"><b>${r.sleep}</b><span>Nächte Schlaf</span></div><div class="stat"><b>${r.rhr}</b><span>Tage Ruhepuls</span></div></div>
+      <div class="small" style="margin-top:10px">${Object.entries(by).map(([k,n])=>`${ic(k)} ${n}× ${SPORTS[k].n}`).join(' · ')||'Keine neuen Trainings im Zeitraum.'}</div>
+      <div class="tiny muted" style="margin-top:6px">${r.dup?`${r.dup} schon vorhandene übersprungen · `:''}${r.merged?`${r.merged} doppelte Aufzeichnungen zusammengeführt · `:''}${r.hrv?`${r.hrv} Tage HRV · `:''}${r.weight?`${r.weight} Gewichtswerte · `:''}ab ${fmtDate(HI.from,{day:'numeric',month:'short',year:'numeric'})}</div></div>
+    ${r.list.length?`<div class="card list">${r.list.slice(-8).reverse().map(s=>`<div class="item">${sIco(s.sport)}<div class="grow"><div class="t">${SPORTS[s.sport].n}${s.distKm?' · '+fmtKm(s.distKm)+' km':''} · ${fmtDur(s.durMin)}</div><div class="m">${fmtDate(s.date,{weekday:'short',day:'numeric',month:'short'})}${s.hr?' · Ø '+s.hr+' bpm':''}${s.watts?' · '+s.watts+' W':''}${s.elev?' · '+s.elev+' hm':''}</div></div></div>`).join('')}${r.list.length>8?`<div class="tiny muted" style="padding:8px 0 2px">… und ${r.list.length-8} weitere</div>`:''}</div>`:''}
+    <button class="btn acc full" style="padding:15px;margin-top:6px" data-act="hiCommit" ${r.list.length||r.sleep||r.rhr||r.weight?'':'disabled'}>${ic('check')} Übernehmen</button>
+    <button class="btn full" style="margin-top:8px" data-act="hiBack">Zurück</button>
+    <div class="tiny muted" style="margin-top:10px">Vorhandene Einträge werden nicht überschrieben. „Anstrengung“ schätzt VELOX aus dem Puls – kannst du pro Einheit anpassen.</div>`);return}
+  openSheet(`${sheetHead('Apple Health importieren')}
+  <div class="card" style="margin-top:6px"><div class="small"><b>1. Export erstellen</b> (einmalig, dauert kurz)</div><ol class="small muted" style="margin:6px 0 0;padding-left:18px"><li>Health-App → oben rechts dein Profilbild</li><li>Ganz unten: <b>Alle Gesundheitsdaten exportieren</b></li><li><b>In Dateien sichern</b></li></ol></div>
+  <div class="field"><label>Importieren ab</label><input class="inp" type="date" data-hi="from" value="${HI.from}" max="${ymd(today())}"></div>
+  <div class="card">${tg('w','Trainings','Laufen, Rad, Zwift, Schwimmen, Kraft')}${tg('walk','Gassi-Runden','Apple-Watch-„Gehen“-Workouts')}${tg('rhr','Ruhepuls & HRV')}${tg('sleep','Schlaf')}${tg('weight','Gewicht')}</div>
+  <div id="hiProg" style="display:${HI.busy?'block':'none'}"><div class="small" id="hiTxt">Lese Export …</div><div style="height:10px;border-radius:6px;background:color-mix(in srgb,currentColor 10%,transparent);overflow:hidden;margin-top:8px"><div id="hiBar" style="height:100%;width:0;background:var(--accent);transition:width .2s"></div></div><div class="tiny muted" style="margin-top:6px">Große Exporte brauchen 1–3 Minuten. App bitte offen lassen.</div></div>
+  ${HI.err?`<div class="card" style="border:1px solid var(--bad)"><div class="small">⚠️ ${HI.err}</div></div>`:''}
+  ${HI.raw&&!HI.busy?`<button class="btn full" style="margin-top:10px" data-act="hiPreview">Weiter zur Vorschau</button><div class="tiny muted" style="margin-top:4px">Neues Startdatum? Dann Datei nochmal auswählen.</div>`:''}
+  <label class="btn acc full" style="padding:15px;margin-top:10px;display:${HI.busy?'none':'flex'};justify-content:center" id="hiPick">📂 export.zip auswählen<input type="file" id="hiFile" accept=".zip,.xml,application/zip,text/xml,application/xml" style="display:none"></label>
+  <div class="tiny muted" style="margin-top:10px">🔒 Alles passiert auf deinem Gerät. Die Datei wird nur gelesen – nicht gespeichert, nicht hochgeladen. Übernommen werden nur Trainings und Tageswerte (verschlüsselt wie der Rest).</div>`);
+  const f=$('#hiFile');if(f)f.onchange=()=>{if(f.files[0])startHealth(f.files[0])};
+  $$('#sheet [data-hi]').forEach(i=>i.onchange=()=>{HI.from=i.value})}
+async function startHealth(file){HI.busy=true;HI.err='';const fi=$('#sheet [data-hi=from]');if(fi)HI.from=fi.value||HI.from;
+  $('#hiProg').style.display='block';$('#hiPick').style.display='none';
+  const t0=Date.now();
+  try{const R=await healthParse(file,HI.from,(p,n)=>{const b=$('#hiBar'),t=$('#hiTxt');if(b)b.style.width=Math.round(p*100)+'%';if(t)t.textContent=`Lese Export … ${Math.round(p*100)} % · ${n} Workouts gefunden`});
+    HI.raw=R;HI.res=hiBuild(R);HI.busy=false;renderHealth()}
+  catch(e){HI.busy=false;console.error(e);HI.err=e.message==='NODECOMP'?'Dein iOS kann die Zip nicht direkt öffnen. Tippe in der Dateien-App einmal auf die <b>export.zip</b> (wird entpackt) und wähle dann im Ordner <b>apple_health_export</b> die Datei <b>Export.xml</b>.':esc(e.message||'Unbekannter Fehler beim Lesen');renderHealth()}}
+function hiCommit(){const r=HI.res;if(!r)return;const o=HI.opt;
+  if(o.w)r.list.forEach(s=>{delete s._end;S.sessions.push(s)});
+  let nd=0;Object.entries(r.D).forEach(([k,v])=>{const d=S.daily[k]=S.daily[k]||{};const put=(f,on)=>{if(on&&v[f]!=null&&d[f]==null){d[f]=v[f];nd++}};put('rhr',o.rhr);put('hrv',o.rhr);put('sleepMin',o.sleep);put('weight',o.weight);if(!Object.keys(d).length)delete S.daily[k]});
+  const lastW=r.list.length?r.list[r.list.length-1].date:null;S.meta.healthImp=ymd(today());if(lastW)S.meta.healthLast=lastW;
+  save();HI.res=null;HI.raw=null;closeSheet();render();confetti();checkBadges();toast(`🍎 ${o.w?r.list.length:0} Einheiten · ${nd} Tageswerte übernommen`,3500)}
+
+/* =====================================================================
    VERPFLEGUNGS-COACH
    ===================================================================== */
 function seasonTemp(){const m=today().getMonth();return[3,3,7,11,15,18,20,20,16,11,7,4][m]}
@@ -2111,6 +2233,11 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'health':openHealth();break;
+    case'hiTog':HI.opt[k]=!HI.opt[k];{const fi=$('#sheet [data-hi=from]');if(fi)HI.from=fi.value||HI.from}renderHealth();break;
+    case'hiCommit':hiCommit();break;
+    case'hiBack':HI.res=null;renderHealth();break;
+    case'hiPreview':if(HI.raw){HI.res=hiBuild(HI.raw);renderHealth()}break;
     case'icsSafari':icsSafari();break;
     case'icsShare':icsShare();break;
     case'coldTog':S.settings.cold.on=!S.settings.cold.on;save();render();break;
