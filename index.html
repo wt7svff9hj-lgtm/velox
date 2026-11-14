@@ -394,7 +394,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='6.9';
+const KEY='velox.v1',VERSION='7.0';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -519,7 +519,7 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp'].forEach(k=>d[k]=d[k]||{});d.progress=d.progress||[];d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -941,7 +941,7 @@ function workoutDetail(w){return`<div class="det">
   ${w.orig?`<h4>${ic('info')} Ursprünglich geplant</h4><div class="small">${esc(w.orig.title)}</div>`:''}
 </div>`}
 function sessMeta(s){const L=sessionLoad(s),a=[fmtDur(s.durMin)];if(s.distKm)a.push(fmtKm(s.distKm)+' km');if(s.sport==='run'&&s.distKm&&s.durMin)a.push(fmtPace(s.durMin*60/s.distKm)+' /km');if(s.np||s.watts)a.push((s.np||s.watts)+' W');if(s.hr)a.push('♥ '+s.hr);if(s.elev)a.push(s.elev+' hm');a.push(L.tss+' Pkt.');return a.join(' · ')}
-const sessItem=s=>`<div class="item" data-sess="${s.id}">${sIco(s.sport)}<div class="grow"><div class="t">${esc(SPORTS[s.sport].n)}${s.kind?` <span class="badge">${KINDS[s.kind]}</span>`:''}${s.together?` <span class="badge acc">${ic('couple')}</span>`:''}</div><div class="m">${when(s.date)}${s.time?' · '+s.time:''} · ${sessMeta(s)}</div></div>${ic('chev','muted')}</div>`;
+const sessItem=s=>`<div class="item" data-sess="${s.id}">${sIco(s.sport)}<div class="grow"><div class="t">${esc(SPORTS[s.sport].n)}${s.kind?` <span class="badge">${KINDS[s.kind]}</span>`:''}${s.together?` <span class="badge acc">${ic('couple')}</span>`:''}${s.coach?` <span class="badge" style="color:var(--${s.coach.score>=80?'good':s.coach.score>=66?'accent':'warn'})">🧠 ${s.coach.score}</span>`:''}</div><div class="m">${when(s.date)}${s.time?' · '+s.time:''} · ${sessMeta(s)}</div></div>${ic('chev','muted')}</div>`;
 const planItem=p=>`<div class="item" data-day="${p.date}">${sIco(p.sport)}<div class="grow"><div class="t">${esc(p.title)}</div><div class="m">${when(p.date)} · ~${fmtDur(p.durMin)}${p.hard?' · <b style="color:var(--accent)">wichtig</b>':''}${p.custom?' · eigenes':''}${p.deload?' · Entlastung':''}</div></div>${ic('chev','muted')}</div>`;
 const insHTML=x=>{const m={good:['ok','var(--good)'],warn:['warn','var(--warn)'],bad:['bad','var(--bad)'],info:['info','var(--accent)']}[x.l];
   return`<div class="ins"><div class="dot" style="background:color-mix(in srgb,${m[1]} 18%,transparent);color:${m[1]}">${ic(m[0])}</div><div class="grow"><b>${esc(x.t)}${x.k?Q(x.k):''}</b><p>${esc(x.d)}</p></div></div>`};
@@ -1159,6 +1159,8 @@ function vAna(){
       <div class="bars" style="margin:16px 0 12px"><span style="width:${ID.t?ID.z.lo/ID.t*100:0}%;background:var(--z2)"></span><span style="width:${ID.t?ID.z.mid/ID.t*100:0}%;background:var(--z3)"></span><span style="width:${ID.t?ID.z.hi/ID.t*100:0}%;background:var(--z5)"></span></div>
       ${[['lo','Locker','var(--z2)'],['mid','Mittel','var(--z3)'],['hi','Hart','var(--z5)']].map(([k,n,c])=>`<div class="kv"><span><i class="zdot" style="background:${c}"></i>${n}</span><b>${ID.t?Math.round(ID.z[k]/ID.t*100):0} % · ${fmtDur(ID.z[k])}</b></div>`).join('')}</div>
   </div>
+  <h2>${ic('up')} Fortschritt<span class="line"></span></h2>
+  ${coachCard()}
   <h2>${ic('flag')} Halbmarathon<span class="line"></span></h2>
   ${fcCard()}
   <h2>${ic('run')} Laufen<span class="line"></span></h2>
@@ -1426,36 +1428,113 @@ function renderForm(){
   <div class="tog"><span class="small">${ic('couple')} Gemeinsam mit Freundin</span><button class="sw ${F.together?'on':''}" data-act="together"></button></div>
   <div class="field"><label>Notiz</label><textarea class="inp" rows="2" data-f="note" placeholder="Wie lief's? Beine, Wetter, Strecke …">${esc(F.note)}</textarea></div>
   <button class="btn acc full" data-act="saveSess" style="padding:16px;font-size:16px">${ic('check')} Speichern & analysieren</button>
+  ${F.id?`<button class="btn full" data-act="anaSess" style="margin-top:8px">🧠 Coach-Analyse ansehen</button>`:''}
   ${F.id?`<button class="btn danger full" data-act="delSess" style="margin-top:8px">${ic('trash')} Löschen</button>`:''}`)}
 const rpeTxt=r=>['','sehr leicht','leicht','leicht','moderat','moderat','etwas hart','hart','sehr hart','extrem hart','maximal'][r];
 function collectForm(){$$('#sheet [data-f]').forEach(i=>F[i.dataset.f]=i.value)}
 function saveSess(){collectForm();const durMin=(num(F.h)||0)*60+(num(F.m)||0);if(!durMin){toast(ic('warn')+' Bitte eine Dauer eintragen');return}
   const planned=plan().find(p=>p.date===F.date);
   const s={id:F.id||uid(),date:F.date||ymd(today()),time:F.time||'',sport:F.sport,durMin,distKm:num(F.distKm),hr:num(F.hr),hrMax:num(F.hrMax),watts:num(F.watts),np:num(F.np),elev:num(F.elev),rpe:+F.rpe||5,kind:F.kind||'',together:!!F.together,note:F.note||'',gearId:F.gearId||'',fromRole:F.fromRole||'',created:F.created||Date.now()};
-  const before=formNow(),i=S.sessions.findIndex(x=>x.id===s.id);if(i>=0)S.sessions[i]=s;else S.sessions.push(s);
+  const pre={thr:thrPaceRaw().v,hm:(hmPred()||{}).t};const before=formNow(),i=S.sessions.findIndex(x=>x.id===s.id);if(i>=0)S.sessions[i]=s;else S.sessions.push(s);
   if(S.overrides[s.date]?.kind==='custom'&&!F.id)delete S.overrides[s.date];
-  save();render();if(!F.id)confetti();showAnalysis(s,before,F.id?null:planned);checkBadges()}
-function showAnalysis(s,before,planned){
-  const L=sessionLoad(s),after=formNow(),n=nextUp(),cat=SPORTS[s.sport].cat,lines=[];
+  save();render();if(!F.id)confetti();showAnalysis(s,before,F.id?null:planned,F.id?null:pre);checkBadges()}
+/* =====================================================================
+   COACH-ANALYSE (ohne KI) – vergleicht mit deiner eigenen Historie und lernt mit
+   ===================================================================== */
+const isEasyS=s=>['easy','recovery','long'].includes(s.kind)||(!s.kind&&(s.rpe||5)<=5);
+const spdOf=s=>s.distKm&&s.durMin?s.distKm*1000/s.durMin:null;
+function similarS(s,n){const cat=SPORTS[s.sport].cat,e=isEasyS(s),lim=ymd(addD(parse(s.date),-120));
+  return S.sessions.filter(x=>x.id!==s.id&&x.date<=s.date&&x.date>=lim&&(cat==='bike'?x.sport===s.sport:SPORTS[x.sport]?.cat===cat)&&isEasyS(x)===e&&x.durMin>=s.durMin*.65&&x.durMin<=s.durMin*1.5&&(!s.distKm||!x.distKm||cat!=='run'||(x.distKm>=s.distKm*.7&&x.distKm<=s.distKm*1.35))&&(s.sport!=='ride'||!s.elev||!x.elev||(x.elev<=s.elev*1.5+150&&x.elev>=s.elev*.6-150)))
+    .sort((a,b)=>a.date<b.date?1:-1).slice(0,n||6)}
+function efTrend(sport,ref){ref=ref||ymd(today());const r=parse(ref),a=ymd(addD(r,-42)),b=ymd(addD(r,-126));
+  const pool=S.sessions.filter(x=>(sport==='run'?x.sport==='run':x.sport===sport)&&isEasyS(x)&&x.date<=ref&&ef(x));
+  const now=pool.filter(x=>x.date>a).map(ef),old=pool.filter(x=>x.date<=a&&x.date>b).map(ef);
+  if(now.length<3||old.length<3)return null;return{pct:avg(now)/avg(old)-1,n:now.length,o:old.length}}
+function riegelP(s){return s.sport==='run'&&s.distKm>=3?riegel(s.durMin*60,s.distKm,RD())*(s.kind==='race'?1:.97):null}
+function ftpCand(s){const w=num(s.np||s.watts);if(!w||s.durMin<20)return null;const f=s.durMin>=55?1:s.durMin>=40?.97:s.durMin>=28?.95:.93;return Math.round(w*f/5)*5}
+function recHours(L){let h=L.tss<40?8:L.tss<70?16:L.tss<110?24:L.tss<160?36:48;if(L.IF>=.86)h+=12;return h}
+function coachAnalyze(s,planned,pre){const L=sessionLoad(s),cat=SPORTS[s.sport].cat,good=[],tips=[],prog=[],info=[];let score=72;
+  const kg=weightE()||75,sim=similarS(s),hr=num(s.hr),Lt=cat==='run'?LTHR():cat==='bike'?LTHRB():null,easy=planned?!planned.hard:isEasyS(s);
+  // 1) Plan
   if(planned){const match=SPORTS[planned.sport].cat===cat,pct=Math.round(L.tss/planned.tss*100);
-    lines.push(match?{i:'target',t:`Plan-Abgleich: ${pct} % der geplanten Belastung`,d:pct>=85&&pct<=120?`Volltreffer – „${planned.title}“ wie geplant umgesetzt.`:pct<85?`Etwas weniger als geplant – völlig okay, wenn die Beine nicht wollten.`:`Mehr als geplant. Die nächste Einheit sollte locker bleiben.`}:{i:'sync',t:'Eigenes Training statt Plan',d:`Geplant war „${planned.title}“. Kein Problem – der Plan wurde auf Basis deiner Einheit neu berechnet.`})}
-  if(s.sport==='run'&&s.distKm){const p=s.durMin*60/s.distKm,prev=S.sessions.filter(x=>x.sport==='run'&&x.id!==s.id&&x.distKm&&x.date<=s.date).sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
-    lines.push(prev.length?{i:'run',t:`Pace ${fmtPace(p)} /km`,d:Math.abs(avg(prev.map(x=>x.durMin*60/x.distKm))-p)<3?'Genau dein Schnitt der letzten Läufe.':avg(prev.map(x=>x.durMin*60/x.distKm))>p?`${Math.round(avg(prev.map(x=>x.durMin*60/x.distKm))-p)} Sek./km schneller als dein Schnitt.`:`${Math.round(p-avg(prev.map(x=>x.durMin*60/x.distKm)))} Sek./km langsamer als dein Schnitt – bei lockeren Läufen genau richtig.`}:{i:'run',t:`Pace ${fmtPace(p)} /km`,d:'Dein erster Lauf in VELOX – der Startschuss!'});
-    const P=paces();if((s.kind==='easy'||s.kind==='recovery')&&p<P.thr*1.15)lines.push({i:'warn',t:'Lockerer Lauf war zu schnell',d:`Für einen lockeren Lauf langsamer als ${fmtPace(P.thr*1.2)} /km bleiben – sonst fehlt die Frische für die wichtigen Einheiten.`});
-    if(s.distKm>=3)lines.push({i:'flag',t:`Hochgerechnet auf 21,1 km: ${fmtTime(riegel(s.durMin*60,s.distKm,RD())*(s.kind==='race'?1:.97))}`,d:s.kind==='race'?'Basierend auf diesem Test.':'Aus einem Trainingslauf geschätzt – Tests machen die Prognose präziser.'});
-    const longest=S.sessions.filter(x=>x.sport==='run'&&x.id!==s.id).reduce((m,x)=>Math.max(m,x.distKm||0),0);if(s.distKm>longest&&longest>0)lines.push({i:'trophy',t:'Neuer Rekord: längster Lauf!',d:`${fmtKm(s.distKm)} km – vorher ${fmtKm(longest)} km.`})}
-  if(cat==='bike'&&(s.np||s.watts)){const p=+(s.np||s.watts),pct=p/S.settings.ftp;const w=weightE();lines.push({i:'bolt',t:`${p} W = ${Math.round(pct*100)} % deiner FTP`,d:`Bereich: ${zoneOf(pct)}${w?' · '+fmtN(p/w,2)+' W/kg':''}.`});
-    if(s.durMin>=20&&pct>1.0)lines.push({i:'up',t:'FTP-Update fällig?',d:'Über FTP für 20+ min – deine FTP ist vermutlich höher. Plane einen FTP-Test.'})}
-  if(s.sport==='walk')lines.push({i:'walk',t:'Aktive Erholung',d:S.settings.walkLoad?'Gassirunden zählen halb in die Belastung.':'Gassirunden fließen nicht in die Belastung ein.'});
-  const e1=ef(s);if(e1){const prev=S.sessions.filter(x=>x.sport===s.sport&&x.id!==s.id).map(ef).filter(Boolean).slice(-5);if(prev.length>=2){const d=e1/avg(prev)-1;lines.push({i:'heart',t:`Effizienz ${d>0?'+':''}${fmtN(d*100,1)} %`,d:d>0?'Mehr Tempo pro Herzschlag als zuletzt – Fitness wächst.':'Etwas weniger effizient als zuletzt – Müdigkeit, Wärme oder Tempowechsel.'})}}
-  const dl=S.daily[s.date];if(dl?.sleepMin&&dl.sleepMin<390&&s.rpe>=7)lines.push({i:'bed',t:'Wenig Schlaf + hohe Anstrengung',d:'Mit nur '+fmtN(dl.sleepMin/60,1)+' h Schlaf fühlt sich alles härter an. Heute früh ins Bett!'});
-  lines.push({i:'gauge',t:`Form ${Math.round(before.tsb)} → ${Math.round(after.tsb)}`,d:formLabel(after.tsb).d});
-  openSheet(`${sheetHead('Analyse')}
-  <div class="card" style="margin-top:12px"><div class="row">${sIco(s.sport,52)}<div class="grow"><div class="mid">${SPORTS[s.sport].n}${s.kind?' · '+KINDS[s.kind]:''}</div><div class="small muted">${fmtDate(s.date,{weekday:'long',day:'numeric',month:'long'})}</div></div>${ring(clamp(L.tss/150,0,1),72,7,sc(s.sport),L.tss,'PUNKTE')}</div>
-    <div class="stats"><div class="stat"><b>${fmtDur(s.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${Math.round(L.IF*100)} %</b><span>Intensität${Q('intensitaet')}</span></div><div class="stat"><b>${['easy','recovery','long'].includes(s.kind)?KINDS[s.kind]:zoneOf(L.IF)}</b><span>Bereich</span></div></div>
-    <div style="margin-top:6px">${lines.map(x=>`<div class="ins"><div class="dot" style="background:var(--card2);color:var(--accent)">${ic(x.i)}</div><div><b>${esc(x.t)}</b><p>${esc(x.d)}</p></div></div>`).join('')}</div>
-    <div class="tiny muted">Belastung (${L.tss} Punkte${Q('belastung')}) berechnet über: ${L.m}</div></div>
-  ${n?`<div class="card hero" style="margin-top:12px"><div class="bigicon">${ic(n.sport)}</div><div class="lbl">Als Nächstes · ${when(n.date)}</div><div class="title" style="font-size:22px">${esc(n.title)}</div><div class="small" style="font-weight:600">${esc(n.short)}</div>${profileBars(n)}<div class="more" id="anaMore"><div>${workoutDetail(n)}</div></div><div class="btnrow"><button class="btn" data-act="toggleAna">${ic('info')} So geht's</button></div></div>`:''}
+    if(!match)info.push({i:'sync',t:'Eigenes Training statt Plan',d:`Geplant war „${planned.title}“ – der Plan rechnet ab jetzt mit deiner Einheit weiter.`});
+    else if(pct>=85&&pct<=120){good.push({i:'target',t:`Plan getroffen (${pct} %)`,d:`„${planned.title}“ wie vorgesehen umgesetzt.`});score+=10}
+    else if(pct<85){tips.push({i:'target',t:`Kürzer/leichter als geplant (${pct} %)`,d:'Völlig okay, wenn Zeit oder Beine nicht wollten. Häuft sich das, passe ich die Umfänge an.'});score-=4}
+    else{tips.push({i:'target',t:`Mehr als geplant (${pct} %)`,d:'Nimm dir die nächste Einheit bewusst locker – die Ermüdung kommt verzögert.'});score-=3}
+    if(match&&planned.hard&&planned.IF&&L.IF<planned.IF-.1){tips.push({i:'bolt',t:'Intensität nicht ganz erreicht',d:`Geplant ~${Math.round(planned.IF*100)} %, gefahren/gelaufen ${Math.round(L.IF*100)} %. Tipp: Intervalle lieber 5 % kürzer als langsamer – und vorher richtig einrollen.`});score-=8}
+    else if(match&&planned.hard&&planned.IF&&L.IF>=planned.IF-.05){good.push({i:'bolt',t:'Intensität sauber getroffen',d:'Genau der Reiz, den die Einheit setzen sollte.'});score+=5}}
+  // 2) Zonen-Disziplin
+  if(easy&&hr&&Lt&&(cat==='run'||cat==='bike')){const top=Math.round(Lt*(cat==='run'?RUNHR[2][1]:BIKEHR[2][1]));
+    if(hr<=top){good.push({i:'heart',t:'Locker war wirklich locker',d:`Ø ${hr} bpm – unter deiner Grenze von ${top}. Genau so wächst die Grundlage.`});score+=10}
+    else if(hr>top+4){tips.push({i:'warn',t:'Für „locker“ zu hart',d:`Ø ${hr} bpm, locker wäre bis ~${top}. ${cat==='run'?'Langsamer laufen, bergauf ruhig gehen':'Bergauf kleinerer Gang, im Sitzen'} – das fühlt sich zu leicht an und ist genau richtig.`});score-=12}}
+  else if(easy&&s.sport==='zwift'&&num(s.watts)){const r=num(s.watts)/S.settings.ftp;if(r<=.75){good.push({i:'bolt',t:'Watt schön im Grundlagenbereich',d:`${s.watts} W = ${Math.round(r*100)} % FTP.`});score+=8}else if(r>.8){tips.push({i:'warn',t:'Für locker etwas zu viel Druck',d:`${s.watts} W = ${Math.round(r*100)} % FTP – locker heißt unter ${Math.round(S.settings.ftp*.75)} W.`});score-=8}}
+  // 3) Vergleich mit ähnlichen Einheiten (lernt aus deiner Historie)
+  if(sim.length>=2){const se=sim.map(ef).filter(Boolean),e1=ef(s);
+    if(e1&&se.length>=2){const ref=avg(se),d=e1/ref-1;
+      if(cat==='run'&&s.distKm){const hrRef=avg(sim.filter(x=>x.hr).map(x=>+x.hr)),pNow=1000/(e1*hrRef)*60,pRef=1000/(ref*hrRef)*60,dd=Math.round(pRef-pNow);
+        if(dd>=4){prog.push({i:'up',t:`Bei gleichem Puls ${dd} s/km schneller`,d:`Verglichen mit deinen letzten ${se.length} ähnlichen Läufen. Deine Ausdauer wird messbar besser.`});score+=8}
+        else if(dd<=-8){tips.push({i:'heart',t:`Heute ${-dd} s/km „teurer“ als sonst`,d:'Gleicher Puls, weniger Tempo als bei ähnlichen Läufen – meist Müdigkeit, Wärme, Wind oder wenig Schlaf. Kein Drama, aber ein Hinweis auf Erholung.'})}
+        else info.push({i:'heart',t:'Effizienz auf deinem Niveau',d:`Tempo pro Herzschlag wie bei deinen letzten ${se.length} ähnlichen Läufen.`})}
+      else if(cat==='bike'){const hrRef=avg(sim.filter(x=>x.hr).map(x=>+x.hr)),wd=Math.round(e1*hrRef-ref*hrRef);
+        if(wd>=5){prog.push({i:'up',t:`+${wd} W bei gleichem Puls`,d:`Verglichen mit deinen letzten ${se.length} ähnlichen Fahrten. Mehr Leistung für die gleiche Anstrengung.`});score+=8}
+        else if(wd<=-10)tips.push({i:'heart',t:`${-wd} W weniger bei gleichem Puls`,d:'Heute zäher als sonst – Müdigkeit, Hitze im Raum (Ventilator!) oder wenig Schlaf.'});
+        else info.push({i:'heart',t:'Effizienz auf deinem Niveau',d:`Watt pro Herzschlag wie bei deinen letzten ${se.length} ähnlichen Fahrten.`})}}
+    else if(cat==='run'&&s.distKm){const pRef=avg(sim.filter(x=>x.distKm).map(x=>x.durMin*60/x.distKm)),p=s.durMin*60/s.distKm,dd=Math.round(pRef-p);
+      if(Math.abs(dd)>=5)info.push({i:'run',t:`${Math.abs(dd)} s/km ${dd>0?'schneller':'langsamer'} als ähnliche Läufe`,d:dd>0?(easy?'Schneller ist bei lockeren Läufen nicht automatisch besser – Puls im Blick behalten (Uhr-Puls eintragen hilft mir).':'Starker Schnitt!'):(easy?'Bei lockeren Läufen völlig okay.':'Heute nicht ganz dein Tempo – Tagesform.')})}}
+  else if(sim.length<2)info.push({i:'info',t:'Ich lerne dich noch kennen',d:`Für Vergleiche brauche ich ein paar ähnliche Einheiten${hr?'':' – am besten mit Ø-Puls'}. Ab 2–3 vergleichbaren Trainings sage ich dir, ob du besser wirst.`});
+  // 4) Rekorde & Meilensteine
+  const prevS=S.sessions.filter(x=>x.id!==s.id&&x.date<=s.date);
+  if(cat==='run'&&s.distKm){const lg=prevS.filter(x=>x.sport==='run').reduce((m,x)=>Math.max(m,x.distKm||0),0);if(lg>0&&s.distKm>lg){prog.push({i:'trophy',t:'Längster Lauf bisher!',d:`${fmtKm(s.distKm)} km – vorher ${fmtKm(lg)} km. Nächster Meilenstein: ${s.distKm<10?'10 km':s.distKm<15?'15 km':s.distKm<18?'18 km':'die volle Distanz'}.`});score+=5}
+    const rp=riegelP(s);if(rp&&pre&&pre.hm&&rp<pre.hm-20){prog.push({i:'flag',t:`Neue HM-Prognose: ${fmtTime(rp)}`,d:`Vorher ${fmtTime(pre.hm)} – ${Math.round((pre.hm-rp)/60)} min schneller.`});score+=6}
+    if(pre&&pre.thr){const nt=thrPaceRaw().v;if(pre.thr-nt>=2&&!parsePace(S.settings.thrPace))prog.push({i:'up',t:`Schwelle jetzt ${fmtPace(nt)} /km`,d:`Vorher ${fmtPace(pre.thr)} /km. Zonen und Paces im Plan habe ich automatisch angepasst.`})}}
+  if(cat==='bike'){const lg=prevS.filter(x=>SPORTS[x.sport]?.cat==='bike').reduce((m,x)=>Math.max(m,x.distKm||0),0);if(s.distKm&&lg>0&&s.distKm>lg){prog.push({i:'trophy',t:'Längste Fahrt bisher!',d:`${fmtKm(s.distKm)} km – vorher ${fmtKm(lg)} km.`});score+=4}
+    const el=prevS.reduce((m,x)=>Math.max(m,x.elev||0),0);if(s.elev&&el>0&&s.elev>el)prog.push({i:'trophy',t:'Meiste Höhenmeter bisher!',d:`${s.elev} hm – vorher ${el} hm. Das zahlt aufs Bergziel ein.`});
+    const fc=ftpCand(s);if(fc&&fc>=S.settings.ftp*1.02){prog.push({i:'bolt',t:`FTP vermutlich bei ~${fc} W`,d:`Aktuell eingestellt: ${S.settings.ftp} W. ${s.durMin} min mit Ø ${s.np||s.watts} W lassen auf mehr schließen.`,act:['coachFtp',fc,`FTP auf ${fc} W setzen`]});score+=6}
+    const w=num(s.np||s.watts);if(w&&s.durMin>=20){const best=prevS.filter(x=>SPORTS[x.sport]?.cat==='bike'&&x.durMin>=20).reduce((m,x)=>Math.max(m,num(x.np||x.watts)||0),0);if(best>0&&w>best&&s.durMin>=20)prog.push({i:'trophy',t:`Bestwert: Ø ${w} W über ${fmtDur(s.durMin)}`,d:`${fmtN(w/kg,2)} W/kg – vorher bestes Ø ${best} W.`})}}
+  // 5) Trend über Wochen (Gedächtnis)
+  const tr=efTrend(s.sport==='run'?'run':s.sport,s.date);if(tr&&tr.pct>=.03)prog.push({i:'up',t:`${fmtN(tr.pct*100,1)} % effizienter als vor 6 Wochen`,d:`Lockere ${cat==='run'?'Läufe':'Fahrten'} im Vergleich: mehr Tempo pro Herzschlag. Das Training wirkt.`});
+  else if(tr&&tr.pct<=-.04)tips.push({i:'heart',t:'Effizienz-Trend leicht rückläufig',d:'Über 6 Wochen etwas weniger Tempo pro Herzschlag – oft zu wenig Erholung oder zu viele mittelharte Einheiten. Mehr wirklich locker + 1 Ruhetag.'});
+  // 6) Gefühl vs. Puls, Schlaf, Ruhepuls
+  if(hr&&Lt&&s.rpe&&!s.rpeEst){const r=hr/Lt,ex=r<.8?3:r<.87?4:r<.92?5:r<.96?6:r<1?7:r<1.03?8:9;
+    if(s.rpe-ex>=2)tips.push({i:'bed',t:'Fühlte sich härter an als der Puls sagt',d:`Anstrengung ${s.rpe}/10 bei eher moderatem Puls – typisch für müde Beine oder Schlafmangel. Morgen locker oder frei.`});
+    else if(ex-s.rpe>=2)info.push({i:'heart',t:'Puls höher als das Gefühl',d:'Hoher Puls bei leichter Anstrengung: Wärme, Koffein, Stress oder ein beginnender Infekt. Ruhepuls morgen früh beachten.'})}
+  const dl=S.daily[s.date];if(dl?.sleepMin&&dl.sleepMin<390&&(s.rpe>=7||L.IF>=.85))tips.push({i:'bed',t:'Wenig Schlaf + harte Einheit',d:`Nur ${fmtN(dl.sleepMin/60,1)} h – heute früh ins Bett, sonst verpufft der Reiz.`});
+  const br=baseline('rhr',21);if(br&&dl?.rhr&&dl.rhr-br>=5)tips.push({i:'heart',t:'Ruhepuls war erhöht',d:`+${Math.round(dl.rhr-br)} über normal. Die nächsten 1–2 Tage nur locker.`});
+  // 7) Konstanz
+  const wk=S.sessions.filter(x=>SPORTS[x.sport]?.cat===cat&&x.date>ymd(addD(parse(s.date),-7))&&x.date<=s.date).length;
+  if(cat==='run'&&wk>=3)good.push({i:'flame',t:`${wk}. Lauf in 7 Tagen`,d:'Konstanz ist der größte Hebel für den Halbmarathon – weiter so.'});
+  if(s.sport==='walk'){info.length=0;tips.length=0;prog.length=0;good.push({i:'walk',t:'Aktive Erholung',d:'Gassi zählt als lockere Bewegung – gut für Erholung und Kopf.'})}
+  score=clamp(Math.round(score+Math.min(prog.length,3)*3),35,100);
+  const head=score>=90?'Top-Einheit 🔥':score>=80?'Starke Einheit 💪':score>=66?'Solide Einheit 👍':'Abgehakt – mit Luft nach oben';
+  const sub=[prog[0]?.t,good[0]?.t,tips[0]?'Tipp: '+tips[0].t:null].filter(Boolean).slice(0,2).join(' · ')||'Trainiert ist trainiert.';
+  const rh=recHours(L),after=[];if(s.durMin>=60||L.IF>=.8)after.push(`In der nächsten Stunde ~${Math.round(kg/10)*10} g Kohlenhydrate + 25 g Eiweiß.`);if(s.durMin>=45)after.push(`~${Math.round(Math.min(1500,s.durMin*8)/50)*50} ml nachtrinken.`);
+  return{L,score,head,sub,good,tips,prog,info,rh,after}}
+function logProgress(s,A){if(!A.prog.length)return;S.progress=S.progress||[];A.prog.forEach(p=>{if(!S.progress.some(x=>x.sid===s.id&&x.t===p.t))S.progress.push({date:s.date,sport:s.sport,t:p.t,d:p.d,sid:s.id})});S.progress=S.progress.slice(-60)}
+function coachCard(){const tr=efTrend('run'),tb=efTrend('zwift'),to=efTrend('ride'),ev=(S.progress||[]).slice(-5).reverse();
+  if(!tr&&!tb&&!to&&!ev.length)return`<div class="card fade"><div class="lbl">📈 Dein Fortschritt</div><div class="empty">${ic('up')}Sobald ein paar vergleichbare Einheiten mit Puls da sind, zeigt dir der Coach hier, wo du besser wirst.</div></div>`;
+  const row=(n,t)=>t?`<div class="kv"><span>${n}</span><b style="color:var(--${t.pct>=.01?'good':t.pct<=-.02?'warn':'text'})">${t.pct>0?'+':''}${fmtN(t.pct*100,1)} %</b></div>`:'';
+  return`<div class="card fade"><div class="lbl">📈 Dein Fortschritt${Q('effizienz')}</div>${tr||tb||to?`<div class="tiny muted" style="margin:6px 0 2px">Effizienz lockerer Einheiten – letzte 6 Wochen vs. davor</div>${row('🏃 Laufen',tr)}${row('🏠 Rad indoor',tb)}${row('🌳 Rad draußen',to)}`:''}
+    ${ev.length?`<div class="tiny muted" style="margin:10px 0 4px">Zuletzt erkannt</div>${ev.map(e=>`<div class="ins" style="padding:6px 0"><div class="dot" style="background:var(--card2);color:var(--good)">${ic(SPORTS[e.sport]?e.sport:'up')}</div><div><b>${esc(e.t)}</b><p>${fmtDate(e.date,{day:'numeric',month:'short'})} · ${esc(e.d)}</p></div></div>`).join('')}`:''}</div>`}
+
+function showAnalysis(s,before,planned,pre){const A=coachAnalyze(s,planned,pre),L=A.L,n=nextUp(),cat=SPORTS[s.sport].cat;
+  if(before){s.coach={score:A.score,head:A.head};logProgress(s,A);save()}
+  const facts=[];
+  if(s.sport==='run'&&s.distKm){facts.push([fmtPace(s.durMin*60/s.distKm),'Pace /km']);const rp=riegelP(s);if(rp)facts.push([fmtTime(rp),'HM-Hochrechnung'])}
+  if(cat==='bike'&&(s.np||s.watts)){const p=+(s.np||s.watts),w=weightE();facts.push([p+' W',Math.round(p/S.settings.ftp*100)+' % FTP']);if(w)facts.push([fmtN(p/w,2),'W/kg'])}
+  if(cat==='bike'&&!(s.np||s.watts)&&s.distKm)facts.push([fmtN(s.distKm/(s.durMin/60),1),'km/h']);
+  if(s.hr)facts.push([s.hr,'Ø Puls']);
+  const it=x=>`<div class="ins"><div class="dot" style="background:var(--card2);color:var(--${x.col||'accent'})">${ic(x.i)}</div><div><b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.act?`<button class="btn sm acc" style="margin-top:6px" data-act="${x.act[0]}" data-k="${x.act[1]}">${x.act[2]}</button>`:''}</div></div>`;
+  const sec=(t,arr,col)=>arr.length?`<div class="lbl" style="margin-top:14px">${t}</div>${arr.map(x=>it(Object.assign({col},x))).join('')}`:'';
+  const after=before?formNow():null,col=A.score>=80?'good':A.score>=66?'accent':'warn';
+  openSheet(`${sheetHead('Coach-Analyse')}
+  <div class="card" style="margin-top:12px"><div class="row">${sIco(s.sport,52)}<div class="grow"><div class="mid">${SPORTS[s.sport].n}${s.kind?' · '+KINDS[s.kind]:''}</div><div class="small muted">${fmtDate(s.date,{weekday:'long',day:'numeric',month:'long'})}</div></div>${ring(A.score/100,72,7,`var(--${col})`,A.score,'COACH')}</div>
+    <div style="margin-top:12px;font-size:20px;font-weight:900;font-style:italic">${A.head}</div><div class="small muted" style="margin-top:2px">${esc(A.sub)}</div>
+    <div class="stats" style="margin-top:12px"><div class="stat"><b>${fmtDur(s.durMin)}</b><span>Dauer</span></div><div class="stat"><b>${L.tss}</b><span>Punkte${Q('belastung')}</span></div><div class="stat"><b>${['easy','recovery','long'].includes(s.kind)?KINDS[s.kind]:zoneOf(L.IF)}</b><span>Bereich</span></div></div>
+    ${facts.length?`<div class="stats" style="margin-top:8px">${facts.slice(0,3).map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`:''}
+    ${sec('📈 Fortschritt',A.prog,'good')}${sec('✅ Gut gemacht',A.good,'good')}${sec('💡 Nächstes Mal',A.tips,'warn')}${sec('ℹ️ Einordnung',A.info,'accent')}
+    <div class="lbl" style="margin-top:14px">🔋 Erholung</div>${it({i:'clock',col:'accent',t:`Nächste harte Einheit frühestens in ~${A.rh} h`,d:(A.after.join(' ')||'Normal essen und trinken reicht.')+(after?` Form ${Math.round(before.tsb)} → ${Math.round(after.tsb)}: ${formLabel(after.tsb).d}`:'')})}
+    <div class="tiny muted" style="margin-top:8px">Belastung berechnet über: ${L.m}. Der Coach vergleicht mit deinen eigenen Einheiten – je mehr mit Puls, desto genauer.</div></div>
+  ${n&&before?`<div class="card hero" style="margin-top:12px"><div class="bigicon">${ic(n.sport)}</div><div class="lbl">Als Nächstes · ${when(n.date)}</div><div class="title" style="font-size:22px">${esc(n.title)}</div><div class="small" style="font-weight:600">${esc(n.short)}</div>${profileBars(n)}<div class="more" id="anaMore"><div>${workoutDetail(n)}</div></div><div class="btnrow"><button class="btn" data-act="toggleAna">${ic('info')} So geht's</button></div></div>`:''}
   <button class="btn full" data-act="close" style="margin-top:12px">Fertig</button>`)}
 function openDay(k){
   const ss=S.sessions.filter(s=>s.date===k),pl=plan().filter(p=>p.date===k),o=S.overrides[k],isPast=k<ymd(today()),dl=S.daily[k];
@@ -2233,6 +2312,8 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'anaSess':{const ss=S.sessions.find(x=>x.id===F.id);if(ss)showAnalysis(ss,null,null,null);break}
+    case'coachFtp':S.settings.ftp=+k;S.settings.ftpDate=ymd(today());save();_cache={};render();toast('⚡ FTP auf '+k+' W gesetzt – Zonen angepasst');el.disabled=true;el.textContent='✓ Übernommen';break;
     case'health':openHealth();break;
     case'hiTog':HI.opt[k]=!HI.opt[k];{const fi=$('#sheet [data-hi=from]');if(fi)HI.from=fi.value||HI.from}renderHealth();break;
     case'hiCommit':hiCommit();break;
