@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="VELOX">
 <meta name="theme-color" content="#08090c">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -359,6 +361,10 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
 .donecard{border:1px solid color-mix(in srgb,var(--good) 40%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--good) 14%,var(--card)),var(--card))}
 .chk{width:40px;height:40px;border-radius:50%;background:var(--good);color:#06140b;display:grid;place-items:center;font-size:22px;flex:none;animation:pop .6s var(--ease) both}
 @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.netb{width:32px;height:32px;border-radius:50%;border:2px solid var(--good);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:none;padding:0;color:var(--good);transition:all .3s}
+.netb svg{width:17px;height:17px}.netb.off{border-color:var(--bad);color:var(--bad);animation:netp 2s infinite}
+@keyframes netp{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--bad) 25%,transparent)}}
+.syncb.pend{border-color:var(--warn)}
 .syncb{width:32px;height:32px;border-radius:50%;border:2px solid var(--muted);background:var(--card);display:grid;place-items:center;font-size:15px;position:relative;cursor:pointer;flex:none;transition:border-color .3s,box-shadow .3s;padding:0}
 .syncb.ok{border-color:var(--good);box-shadow:0 0 0 4px color-mix(in srgb,var(--good) 18%,transparent),0 0 18px color-mix(in srgb,var(--good) 35%,transparent)}
 .syncb.ok::after{content:"✓";position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;font-size:8px!important;border-radius:50%;background:var(--good);color:#04140a;font-size:10px;font-weight:900;display:grid;place-items:center;border:2px solid var(--bg)}
@@ -394,7 +400,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
    Screenshot-Erkennung: Tesseract.js (lädt bei erster Nutzung), Bilder werden nicht gespeichert
    Sport-Icons: Material Icons (Apache License 2.0)
    ===================================================================== */
-const KEY='velox.v1',VERSION='7.6';
+const KEY='velox.v1',VERSION='7.9';
 
 /* ---------- Icons ---------- */
 const SPI={ // gefüllte Sport-Icons (Material, Apache 2.0)
@@ -522,7 +528,8 @@ function hydrate(d){const def=defaults();
   d.settings.theme=Object.assign({},PRESETS.Volt,d.settings.theme||{});
   d.settings.sportColors=Object.assign({},SPORT_COLORS,d.settings.sportColors||{});
   d.settings.sync=Object.assign(def.settings.sync,d.settings.sync||{});
-  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp','edits'].forEach(k=>d[k]=d[k]||{});d.progress=d.progress||[];d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
+  ['overrides','daily','planLog','badges','seen','meta','snooze','dismissed','wxSwap','calExp','edits'].forEach(k=>d[k]=d[k]||{});d.progress=d.progress||[];d.settings.wx=Object.assign({on:true,name:'',lat:null,lon:null},d.settings.wx||{});if(!d.settings.privacyV1){d.settings.privacyV1=true;if(d.settings.wx)d.settings.wx.on=false;d.settings.ocrOk=false}
+  d.settings.cold=Object.assign({on:true,t:8},d.settings.cold||{});d.settings.fuel=Object.assign({dates:true,dateKH:18,gels:true,gelKH:25,malto:true,elec:true,elecMg:500,elecUnit:'Tab',bars:false,barKH:40,banana:false,bottle:750,holders:2,flask:500},d.settings.fuel||{});d.deleted=d.deleted||[];d.gear=d.gear||[];d.sessions=d.sessions||[];
   if(d.checkins){Object.entries(d.checkins).forEach(([k,c])=>{d.daily[k]=Object.assign({legs:c.legs,energy:c.energy},d.daily[k]||{})});delete d.checkins}
   if(!d.settings.planStart)d.settings.planStart=ymd(today());
   if(d.v<3&&d.sessions.length)d.settings.onboarded=d.settings.onboarded||false;d.v=3;
@@ -1115,7 +1122,7 @@ function vHome(){
   const last=[...S.sessions].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.created||0)-(a.created||0))[0];
   const termKeys=Object.keys(GL),tod=termKeys[Math.floor(t0/864e5)%termKeys.length];
   return`
-  <div class="top fade"><div class="brand">${logoSVG(S.settings.theme.accent,S.settings.theme.accentText)}VELOX</div>${syncBadge()}</div>
+  <div class="top fade"><div class="brand">${logoSVG(S.settings.theme.accent,S.settings.theme.accentText)}VELOX</div><div class="row" style="gap:8px">${netBadge()}${syncBadge()}</div></div>
   <div class="greet fade"><div class="hi">${ic(G.i)} ${t0.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}</div>
     <h1>${G.t}${S.settings.name?', '+esc(S.settings.name):''} <span class="emo">${G.e}${moodEmoji()}</span></h1><div class="h1s">${subline()}</div>${wxNow()}</div>
   ${td.length?`<h2>${ic('bell')} Für dich<span class="line"></span>${td.length>4?`<a data-act="allTodos">${showAllTodos?'Weniger':'Alle '+td.length} ${ic('chev')}</a>`:''}</h2><div class="card fade">${td.slice(0,showAllTodos?99:4).map(x=>`<div class="todo" data-act="${x.a}"><div class="ti">${ic(x.i)}</div><div class="grow"><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div>${ic('chev','muted')}</div>`).join('')}</div>`:''}
@@ -1307,6 +1314,13 @@ function vSet(){
     <button class="btn sm" style="margin-top:10px" data-act="resetTheme">Design zurücksetzen</button></div>
   <h2>${ic('book')} Wissen<span class="line"></span></h2>
   <div class="card list"><div class="item" data-act="lexicon">${sIco('other')}<div class="grow"><div class="t">Lexikon</div><div class="m">${Object.keys(GL).length} Fachbegriffe einfach erklärt</div></div>${ic('chev','muted')}</div></div>
+  <h2>🔒 Privatsphäre & Schutz<span class="line"></span></h2>
+  <div class="card"><div class="row between"><div><b>🔐 Passwortschutz der Seite</b><div class="tiny muted">${gated()?'✅ Aktiv – auf GitHub liegt nur ein verschlüsselter Block':'Noch nicht aktiv – jeder mit der Adresse kann die Seite öffnen'}</div></div>${gated()?'<span style="font-size:22px">🛡️</span>':''}</div>
+    <div class="btnrow" style="margin-top:10px">${gated()?`<button class="btn acc" data-act="gUpd">⬆️ Update einspielen</button><button class="btn" data-act="gSetup">Passwort ändern</button><button class="btn" data-act="gRepo">GitHub-Upload</button><button class="btn" data-act="gForget">Gerät vergessen</button>`:`<button class="btn acc" data-act="gSetup">🔐 Einrichten</button>`}</div>
+    <div class="lbl" style="margin-top:16px">Externe Dienste</div>
+    <div class="tog"><span class="small"><b>🌤️ Wetter (Open-Meteo)</b><br><span class="muted">sieht deine IP & den Standort</span></span><button class="sw ${S.settings.wx.on?'on':''}" data-act="privTog" data-k="wx"></button></div>
+    <div class="tog"><span class="small"><b>📷 Screenshot-Texterkennung (jsDelivr)</b><br><span class="muted">${S.settings.ocrOk?'immer erlaubt':'fragt jedes Mal nach'} · sieht deine IP</span></span><button class="sw ${S.settings.ocrOk?'on':''}" data-act="privTog" data-k="ocr"></button></div>
+    <div class="tiny muted" style="margin-top:8px">Sonst spricht VELOX nur mit GitHub (dein Hosting – sieht dich ohnehin) für den verschlüsselten Sync. Keine Google-Fonts, kein Tracking, keine Analyse-Dienste.</div></div>
   <h2>🏝️ Urlaub<span class="line"></span></h2>
   <div class="card">${(v=>v?`<div class="small"><b>Urlaubsmodus ${v.from<=ymd(today())?'aktiv':'geplant'}</b>: ${fmtDate(v.from,{day:'numeric',month:'short'})} – ${fmtDate(v.to,{weekday:'short',day:'numeric',month:'short'})} · ${VAC_T[vacType()][0]} ${VAC_T[vacType()][1]}${vacType()==='sport'?' ('+[v.run&&'Laufen',v.bike&&'Rad'].filter(Boolean).join(' & ')+', '+(v.level==='camp'?'Trainingsurlaub':'locker')+')':''}</div><div class="btnrow" style="margin-top:10px"><button class="btn" data-act="vacOpen">${ic('edit')} Ändern</button><button class="btn" data-act="vacEnd">Beenden</button></div>`:`<div class="small muted">Trag deinen Urlaub ein – bis dahin gibt's keine Trainingsvorgaben, nur Spaziergänge & Wanderungen (oder komplette Pause). Danach steigst du sanft wieder ein.</div><button class="btn acc full" style="margin-top:10px" data-act="vacOpen">🏝️ Urlaub eintragen</button>`)(vacActive())}</div>
   <h2>🍌 Meine Verpflegung<span class="line"></span></h2>
@@ -1315,7 +1329,7 @@ function vSet(){
     <div class="f3" style="margin-top:10px"><div class="field"><label>Radflasche ml</label><input class="inp" inputmode="numeric" data-fuel="bottle" value="${S.settings.fuel.bottle}"></div><div class="field"><label>Flaschenhalter</label><input class="inp" inputmode="numeric" data-fuel="holders" value="${S.settings.fuel.holders}"></div><div class="field"><label>Lauf-Flask ml</label><input class="inp" inputmode="numeric" data-fuel="flask" value="${S.settings.fuel.flask}"></div></div>
     <div class="field"><label>Elektrolyt-Portion heißt</label><div class="chips">${['Tab','Messlöffel','Stick'].map(x=>`<button class="chip ${S.settings.fuel.elecUnit===x?'on':''}" data-act="fuelUnit" data-k="${x}">${x}</button>`).join('')}</div></div></div>
   <h2>🌤️ Wetter-Coach<span class="line"></span></h2>
-  <div class="card"><div class="row between"><div><b>${S.settings.wx.lat!=null?esc(S.settings.wx.name||'Mein Standort'):'Kein Standort'}</b><div class="tiny muted">Vorhersage von Open-Meteo · passt Zeit, Ort & Kleidung an</div></div><button class="sw ${S.settings.wx.on?'on':''}" data-act="wxToggle"></button></div>
+  <div class="card"><div class="row between"><div><b>${S.settings.wx.lat!=null?esc(S.settings.wx.name||'Mein Standort'):'Kein Standort'}</b><div class="tiny muted">Vorhersage von Open-Meteo · passt Zeit, Ort & Kleidung an<br>⚠️ Externer Dienst: sieht beim Abruf deine IP-Adresse & den Standort</div></div><button class="sw ${S.settings.wx.on?'on':''}" data-act="wxToggle"></button></div>
     <div class="btnrow"><button class="btn" data-act="wxGps">📍 Standort</button><button class="btn" data-act="wxSetup">Ort suchen</button></div>
     <div class="tog" style="margin-top:10px"><span class="small"><b>🥶 Bei Kälte Rad auf die Rolle</b><br><span class="muted">unter <input class="inp" style="display:inline-block;width:56px;padding:4px 8px;font-size:14px" inputmode="numeric" data-cold="t" value="${S.settings.cold.t}"> °C${(v=>v.cold!=null?` · gelernt: bei Kälte ${Math.round(v.cold*100)} % drinnen`:'')(bikeVenue())}${(v=>v.warm!=null?`, bei Wärme ${Math.round((1-v.warm)*100)} % draußen`:'')(bikeVenue())}</span></span><button class="sw ${S.settings.cold.on?'on':''}" data-act="coldTog"></button></div></div>
   <h2>${ic('download')} App & Version<span class="line"></span></h2>
@@ -1326,7 +1340,7 @@ function vSet(){
     <div class="btnrow">${pinOn()?`<button class="btn" data-act="pinChange">PIN ändern</button><button class="btn ghost" data-act="pinOff">Deaktivieren</button>`:`<button class="btn acc" data-act="pinChange">PIN festlegen</button>`}</div>
     <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--card2)"><div class="row" style="gap:10px"><span style="font-size:26px;color:var(--accent)">${FACEID}</span><div><b>Face ID</b><div class="tiny muted">${bioOn()?'Entsperren per Gesicht – PIN bleibt als Ersatz':pinOn()?'Schneller entsperren statt PIN-Eingabe':'Erst PIN festlegen'}</div></div></div><button class="sw ${bioOn()?'on':''}" data-act="bioToggle"></button></div></div>
   <h2>${ic('sync')} Sync & Verschlüsselung<span class="line"></span></h2>
-  <div class="card"><div class="row" style="gap:12px">${syncBadge(true)}<div class="grow"><b>${{ok:'Synchronisiert & verschlüsselt',busy:'Synchronisiert gerade …',err:'Sync-Fehler',off:'Nur auf diesem Gerät'}[syncState]}</b><div class="tiny muted">${syncReady()?'AES-256 Ende-zu-Ende · '+(st.sync.last?'zuletzt '+new Date(st.sync.last).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'noch nie'):'Daten zwischen iPhone & iPad abgleichen'}</div></div></div>
+  <div class="card"><div class="row" style="gap:12px">${syncBadge(true)}<div class="grow"><b>${{ok:'Synchronisiert & verschlüsselt',busy:'Synchronisiert gerade …',err:'Sync-Fehler',pend:'Offline – wartet auf Netz',off:'Nur auf diesem Gerät'}[syncState]}</b><div class="tiny muted">${syncReady()?'AES-256 Ende-zu-Ende · '+(st.sync.last?'zuletzt '+new Date(st.sync.last).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'noch nie'):'Daten zwischen iPhone & iPad abgleichen'}</div></div></div>
     <div class="small muted" style="margin-top:10px">Deine Daten werden <b>auf dem Gerät verschlüsselt</b> und erst dann in einem geheimen (nicht öffentlich gelisteten) GitHub-Gist gespeichert. Ohne dein Sync-Passwort kann sie niemand lesen – auch GitHub nicht.</div>
     <div class="field"><label>GitHub-Token (Berechtigung „gist“)</label><input class="inp" type="password" data-sync="token" value="${esc(st.sync.token)}" placeholder="ghp_…" autocomplete="off"></div>
     <div class="field"><label>Sync-Passwort (auf allen Geräten gleich)</label><input class="inp" type="password" data-sync="pass" value="${esc(st.sync.pass)}" placeholder="mind. 8 Zeichen" autocomplete="new-password"></div>
@@ -1337,6 +1351,13 @@ function vSet(){
   <h2>${ic('db')} Daten<span class="line"></span></h2>
   <div class="card"><button class="btn acc full" data-act="health" style="margin-bottom:10px">🍎 Apple Health importieren</button><div class="tiny muted" style="margin:-2px 0 10px">${S.meta.healthImp?'Zuletzt importiert: '+fmtDate(S.meta.healthImp,{day:'numeric',month:'short'})+' – beim nächsten Mal geht\'s ab dort weiter.':'Alle Trainings, Ruhepuls, HRV, Schlaf & Gewicht auf einmal übernehmen.'}</div><div class="row wrapf"><button class="btn sm" data-act="export">${ic('download')} Export</button><button class="btn sm" data-act="import">${ic('upload')} Import</button><button class="btn sm danger" data-act="wipe">${ic('trash')} Alles löschen</button></div>
   <div class="tiny muted" style="margin-top:10px">${S.sessions.length} Einheiten · ${Object.keys(S.daily).length} Tages-Checks gespeichert. Screenshots werden nie gespeichert.</div></div>`}
+const WIFI_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16.1a5 5 0 0 1 6 0"/><circle cx="12" cy="19.6" r="1.2" fill="currentColor" stroke="none"/></svg>';
+const WIFI_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 8.8a15 15 0 0 1 4.2-2.9"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M5.5 12.5a10 10 0 0 1 4-2.2"/><path d="M16.2 10.9a10 10 0 0 1 2.3 1.6"/><path d="M9 16.1a5 5 0 0 1 6 0"/><circle cx="12" cy="19.6" r="1.2" fill="currentColor" stroke="none"/><path d="M3 3l18 18"/></svg>';
+const isOnline=()=>navigator.onLine!==false;
+function netBadge(){const on=isOnline();return`<button class="netb ${on?'':'off'}" data-act="netInfo" aria-label="${on?'Online':'Offline'}">${on?WIFI_ON:WIFI_OFF}</button>`}
+function setNet(){const on=isOnline();$$('.netb').forEach(b=>{b.className='netb'+(on?'':' off');b.innerHTML=on?WIFI_ON:WIFI_OFF;b.setAttribute('aria-label',on?'Online':'Offline')})}
+window.addEventListener('offline',()=>{setNet();toast('📴 Offline – alles wird auf dem Gerät gespeichert',3000)});
+window.addEventListener('online',()=>{setNet();if(syncReady()&&(S.meta.syncPending||syncState!=='ok')){toast('📶 Wieder online – synchronisiere …');syncNow(true).then(()=>{if(syncState==='ok')toast('👟 Nachsynchronisiert & verschlüsselt')})}else toast('📶 Wieder online')});
 function syncBadge(big){const st=syncReady()?syncState:'off';return`<button class="syncb ${st}" data-act="syncInfo" aria-label="Sync-Status" ${big?'style="width:48px;height:48px;font-size:23px"':''}><span>👟</span></button>`}
 
 /* =====================================================================
@@ -1433,6 +1454,12 @@ function parseSleep(text){
   return r}
 /*PARSER-END*/
 
+function openOcrAsk(mode){openSheet(`${sheetHead('Texterkennung')}
+  <div class="small" style="margin-top:6px">Zum Auslesen von Screenshots lädt VELOX einmalig ein Texterkennungs-Programm von <b>cdn.jsdelivr.net</b> nach. Dabei sieht dieser Anbieter deine <b>IP-Adresse</b>. Dein Bild selbst bleibt auf dem Gerät und wird nicht hochgeladen.</div>
+  <button class="btn acc full" style="margin-top:14px" data-act="ocrAllow" data-k="once:${mode}">Nur dieses Mal erlauben</button>
+  <button class="btn full" style="margin-top:8px" data-act="ocrAllow" data-k="always:${mode}">Immer erlauben</button>
+  <button class="btn ghost full" style="margin-top:8px" data-act="ocrAllow" data-k="no:${mode}">Lieber manuell eintragen</button>
+  <div class="tiny muted" style="margin-top:10px">Komplett lokal und ohne fremde Server: <b>Apple Health importieren</b> (Setup → Daten). Einstellung jederzeit unter Setup → Privatsphäre.</div>`)}
 let tessP=null;
 function loadTess(){if(window.Tesseract)return Promise.resolve();if(tessP)return tessP;
   tessP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>{tessP=null;rej(new Error('Texterkennung konnte nicht geladen werden (Internet?)'))};document.head.appendChild(s)});return tessP}
@@ -1444,13 +1471,14 @@ async function ocr(file,onP){await loadTess();onP&&onP(.05,'Bild wird vorbereite
   const w=await Tesseract.createWorker(['deu','eng'],1,{logger:m=>{if(m.status==='recognizing text')onP&&onP(.3+m.progress*.7,'Text wird erkannt …');else if(/load/.test(m.status))onP&&onP(.1+(m.progress||0)*.2,'Erkennung wird geladen (einmalig) …')}});
   try{const r=await w.recognize(c);return r.data.text}finally{await w.terminate()}}
 let shotMode=null;
-function pickShot(mode){shotMode=mode;const i=$('#shot');i.value='';i.click()}
+let ocrOnce=false;
+function pickShot(mode){if(!S.settings.ocrOk&&!ocrOnce){openOcrAsk(mode);return}ocrOnce=false;shotMode=mode;const i=$('#shot');i.value='';i.click()}
 $('#shot').onchange=async e=>{const file=e.target.files[0];if(!file)return;const mode=shotMode;
   const bar=$('#scanBar'),lbl=$('#scanLbl');if(bar)bar.parentElement.classList.remove('hide');
   const onP=(p,t)=>{if(bar)bar.style.width=Math.round(p*100)+'%';if(lbl)lbl.textContent=t};
   try{const text=await ocr(file,onP);
     if(mode==='workout'){collectForm();const r=parseWorkout(text,today());if(!r.found.length)throw new Error('Keine Trainingsdaten erkannt');
-      if(r.sport)F.sport=r.sport;if(r.date)F.date=ymd(r.date);if(r.durMin)Object.assign(F,splitDur(r.durMin))
+      if(r.sport)F.sport=r.sport;if(r.date)F.date=ymd(r.date);if(r.durMin)Object.assign(F,splitDur(r.durMin));
       ['distKm','hr','hrMax','watts','np','elev'].forEach(k=>{if(r[k]!=null)F[k]=k==='distKm'?String(r[k]).replace('.',','):r[k]});F.ocr=r.found;F.ocrText=text;renderForm();toast(ic('check')+' Erkannt: '+r.found.join(', '))}
     else{collectMorning();const r=parseSleep(text);if(!r.found.length)throw new Error('Keine Schlafdaten erkannt');
       if(r.sleepMin){MF.sh=Math.floor(r.sleepMin/60);MF.sm=r.sleepMin%60}['sleepScore','rhr','hrv'].forEach(k=>{if(r[k]!=null)MF[k]=r[k]});MF.ocr=r.found;renderMorning();toast(ic('check')+' Erkannt: '+r.found.join(', '))}}
@@ -1623,6 +1651,65 @@ function openDay(k){
 function openOther(k){openSheet(`${sheetHead('Anderes Training')}<div class="small muted" style="margin:6px 0 12px">Du entscheidest – der Plan passt sich an.</div>
   <div class="list card">${[['other','newday','Schon etwas anderes gemacht?','Eintragen (oder Screenshot) → neue Empfehlung.'],['hike','vacOpen','Urlaub eintragen','Strand, Wandern, Städtetrip oder Sporturlaub – ich plane passend.'],['zwift','planOwn','Eigenes Training planen','Ersetzt die Empfehlung an diesem Tag.'],['walk','rest','Heute aussetzen','Ruhetag – die Einheiten verteilen sich neu.'],['run','easier','Lockere Alternative','Statt der harten Einheit eine Erholungseinheit.']].map(([i,a,t,d])=>`<div class="item" ${a==='newday'?`data-newday="${ymd(today())}"`:`data-act="${a}" data-k="${k}"`}>${sIco(i)}<div class="grow"><div class="t">${t}</div><div class="m">${d}</div></div>${ic('chev','muted')}</div>`).join('')}</div>`)}
 let PF=null;
+/* ---- Passwortschutz der Seite: alles auf deinem Gerät, nichts verlässt es ---- */
+const gated=()=>!!(window.__veloxGate||sessionStorage.getItem('velox.gated'));
+const gB64=u=>{u=new Uint8Array(u);let x='';for(let i=0;i<u.length;i+=32768)x+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(x).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const GATE_TPL='PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImRlIj48aGVhZD4KPG1ldGEgY2hhcnNldD0idXRmLTgiPgo8bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLCBpbml0aWFsLXNjYWxlPTEsIHZpZXdwb3J0LWZpdD1jb3ZlciwgbWF4aW11bS1zY2FsZT0xIj4KPG1ldGEgbmFtZT0icm9ib3RzIiBjb250ZW50PSJub2luZGV4LG5vZm9sbG93LG5vYXJjaGl2ZSI+CjxtZXRhIG5hbWU9InJlZmVycmVyIiBjb250ZW50PSJuby1yZWZlcnJlciI+CjxtZXRhIG5hbWU9ImFwcGxlLW1vYmlsZS13ZWItYXBwLWNhcGFibGUiIGNvbnRlbnQ9InllcyI+CjxtZXRhIG5hbWU9Im1vYmlsZS13ZWItYXBwLWNhcGFibGUiIGNvbnRlbnQ9InllcyI+CjxtZXRhIG5hbWU9ImFwcGxlLW1vYmlsZS13ZWItYXBwLXN0YXR1cy1iYXItc3R5bGUiIGNvbnRlbnQ9ImJsYWNrLXRyYW5zbHVjZW50Ij4KPG1ldGEgbmFtZT0iYXBwbGUtbW9iaWxlLXdlYi1hcHAtdGl0bGUiIGNvbnRlbnQ9IlZFTE9YIj4KPG1ldGEgbmFtZT0idGhlbWUtY29sb3IiIGNvbnRlbnQ9IiMwODA5MGMiPgo8bWV0YSBodHRwLWVxdWl2PSJDYWNoZS1Db250cm9sIiBjb250ZW50PSJuby1jYWNoZSwgbm8tc3RvcmUsIG11c3QtcmV2YWxpZGF0ZSI+Cjx0aXRsZT5WRUxPWDwvdGl0bGU+CjxsaW5rIHJlbD0ibWFuaWZlc3QiIGhyZWY9Im1hbmlmZXN0LndlYm1hbmlmZXN0Ij4KPGxpbmsgcmVsPSJpY29uIiBocmVmPSJmYXZpY29uLnN2ZyI+CjxsaW5rIHJlbD0iYXBwbGUtdG91Y2gtaWNvbiIgaHJlZj0iYXBwbGUtdG91Y2gtaWNvbi5wbmciPgo8c3R5bGU+Cmh0bWwsYm9keXttYXJnaW46MDtoZWlnaHQ6MTAwJTtiYWNrZ3JvdW5kOiMwODA5MGM7Y29sb3I6I2YzZjVmNztmb250LWZhbWlseTotYXBwbGUtc3lzdGVtLHN5c3RlbS11aSwiU2Vnb2UgVUkiLHNhbnMtc2VyaWY7LXdlYmtpdC1mb250LXNtb290aGluZzphbnRpYWxpYXNlZH0KI2d7bWluLWhlaWdodDoxMDAlO2Rpc3BsYXk6ZmxleDtmbGV4LWRpcmVjdGlvbjpjb2x1bW47YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7cGFkZGluZzoyNHB4O2JveC1zaXppbmc6Ym9yZGVyLWJveDt0ZXh0LWFsaWduOmNlbnRlcn0KLmxvZ297d2lkdGg6NzZweDtoZWlnaHQ6NzZweDtib3JkZXItcmFkaXVzOjIycHg7YmFja2dyb3VuZDojYzZmZjNkO2Rpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjtmb250LXdlaWdodDo5MDA7Zm9udC1zdHlsZTppdGFsaWM7Zm9udC1zaXplOjQ0cHg7Y29sb3I6IzA4MDkwYztib3gtc2hhZG93OjAgMCA0MHB4ICNjNmZmM2Q1NX0KaDF7Zm9udC1zdHlsZTppdGFsaWM7Zm9udC13ZWlnaHQ6OTAwO2xldHRlci1zcGFjaW5nOi4wNmVtO21hcmdpbjoxOHB4IDAgNHB4O2ZvbnQtc2l6ZToyNnB4fQpwe2NvbG9yOiM4YTkzYTM7Zm9udC1zaXplOjE0cHg7bWFyZ2luOjAgMCAyMnB4O2xpbmUtaGVpZ2h0OjEuNDV9CmZvcm17d2lkdGg6MTAwJTttYXgtd2lkdGg6MzQwcHh9CmlucHV0W3R5cGU9cGFzc3dvcmRde3dpZHRoOjEwMCU7Ym94LXNpemluZzpib3JkZXItYm94O2JhY2tncm91bmQ6IzE0MTcxYztib3JkZXI6MS41cHggc29saWQgIzI2MmIzMztjb2xvcjojZjNmNWY3O2JvcmRlci1yYWRpdXM6MTZweDtwYWRkaW5nOjE2cHg7Zm9udC1zaXplOjE3cHg7b3V0bGluZTpub25lfQppbnB1dFt0eXBlPXBhc3N3b3JkXTpmb2N1c3tib3JkZXItY29sb3I6I2M2ZmYzZH0KYnV0dG9ue3dpZHRoOjEwMCU7bWFyZ2luLXRvcDoxMnB4O2JvcmRlcjowO2JvcmRlci1yYWRpdXM6MTZweDtwYWRkaW5nOjE2cHg7Zm9udC1zaXplOjE3cHg7Zm9udC13ZWlnaHQ6ODAwO2JhY2tncm91bmQ6I2M2ZmYzZDtjb2xvcjojMDgwOTBjO2ZvbnQtZmFtaWx5OmluaGVyaXR9CmJ1dHRvbjpkaXNhYmxlZHtvcGFjaXR5Oi42fQpsYWJlbHtkaXNwbGF5OmZsZXg7Z2FwOjhweDthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjttYXJnaW4tdG9wOjE0cHg7Y29sb3I6IzhhOTNhMztmb250LXNpemU6MTNweH0KLmVycntjb2xvcjojZmY2YjZiO2ZvbnQtc2l6ZToxNHB4O21pbi1oZWlnaHQ6MjBweDttYXJnaW4tdG9wOjEycHg7Zm9udC13ZWlnaHQ6NzAwfQoudntwb3NpdGlvbjpmaXhlZDtib3R0b206Y2FsYygxNHB4ICsgZW52KHNhZmUtYXJlYS1pbnNldC1ib3R0b20pKTtsZWZ0OjA7cmlnaHQ6MDtjb2xvcjojNGE1MTVjO2ZvbnQtc2l6ZToxMXB4O2xldHRlci1zcGFjaW5nOi4wOGVtO3RleHQtYWxpZ246Y2VudGVyfQouaGlkZXtkaXNwbGF5Om5vbmV9CkBrZXlmcmFtZXMgc2h7MjAlLDYwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWCgtOHB4KX00MCUsODAle3RyYW5zZm9ybTp0cmFuc2xhdGVYKDhweCl9fS5zaGFrZXthbmltYXRpb246c2ggLjRzfQo8L3N0eWxlPjwvaGVhZD48Ym9keT4KPGRpdiBpZD0iZyIgY2xhc3M9ImhpZGUiPgogIDxkaXYgY2xhc3M9ImxvZ28iPlY8L2Rpdj4KICA8aDE+VkVMT1g8L2gxPgogIDxwPkdlc2Now7x0enRlciBCZXJlaWNoLjxicj5FaW5tYWwgZGFzIFBhc3N3b3J0IOKAkyBkYW5hY2ggbWVya3Qgc2ljaCBkaWVzZXMgR2Vyw6R0IGRlbiBTY2hsw7xzc2VsLjwvcD4KICA8Zm9ybSBpZD0iZiIgYXV0b2NvbXBsZXRlPSJvbiI+CiAgICA8aW5wdXQgdHlwZT0idGV4dCIgbmFtZT0idXNlcm5hbWUiIHZhbHVlPSJ2ZWxveCIgYXV0b2NvbXBsZXRlPSJ1c2VybmFtZSIgc3R5bGU9ImRpc3BsYXk6bm9uZSI+CiAgICA8aW5wdXQgaWQ9InB3IiB0eXBlPSJwYXNzd29yZCIgYXV0b2NvbXBsZXRlPSJjdXJyZW50LXBhc3N3b3JkIiBwbGFjZWhvbGRlcj0iUGFzc3dvcnQiIHJlcXVpcmVkPgogICAgPGJ1dHRvbiBpZD0iYiIgdHlwZT0ic3VibWl0Ij5FbnRzcGVycmVuPC9idXR0b24+CiAgICA8bGFiZWw+PGlucHV0IGlkPSJyZW0iIHR5cGU9ImNoZWNrYm94IiBjaGVja2VkPiBEaWVzZXMgR2Vyw6R0IG1lcmtlbjwvbGFiZWw+CiAgICA8ZGl2IGNsYXNzPSJlcnIiIGlkPSJlIj48L2Rpdj4KICA8L2Zvcm0+CjwvZGl2Pgo8ZGl2IGNsYXNzPSJ2Ij5WRUxPWCBfX1ZFUl9fIMK3IPCflJIgdmVyc2NobMO8c3NlbHQ8L2Rpdj4KPHNjcmlwdD4KLyogVkVSU0lPTj0nX19WRVJfXycgKi8KKGZ1bmN0aW9uKCl7CmNvbnN0IEc9X19HX187CmNvbnN0IEM9Y3J5cHRvLnN1YnRsZSx0ZT1uZXcgVGV4dEVuY29kZXIoKSwkPWlkPT5kb2N1bWVudC5nZXRFbGVtZW50QnlJZChpZCk7CmNvbnN0IHViPXM9PntzPXMucmVwbGFjZSgvLS9nLCcrJykucmVwbGFjZSgvXy9nLCcvJyk7d2hpbGUocy5sZW5ndGglNClzKz0nPSc7Y29uc3QgYj1hdG9iKHMpLHU9bmV3IFVpbnQ4QXJyYXkoYi5sZW5ndGgpO2ZvcihsZXQgaT0wO2k8Yi5sZW5ndGg7aSsrKXVbaV09Yi5jaGFyQ29kZUF0KGkpO3JldHVybiB1fTsKY29uc3QgZGI9KCk9Pm5ldyBQcm9taXNlKChyZXMscmVqKT0+e2NvbnN0IHI9aW5kZXhlZERCLm9wZW4oJ3ZlbG94LWdhdGUnLDEpO3Iub251cGdyYWRlbmVlZGVkPSgpPT5yLnJlc3VsdC5jcmVhdGVPYmplY3RTdG9yZSgnaycpO3Iub25zdWNjZXNzPSgpPT5yZXMoci5yZXN1bHQpO3Iub25lcnJvcj0oKT0+cmVqKHIuZXJyb3IpfSk7CmFzeW5jIGZ1bmN0aW9uIGlkYkdldCgpe3RyeXtjb25zdCBkPWF3YWl0IGRiKCk7cmV0dXJuIGF3YWl0IG5ldyBQcm9taXNlKHI9Pntjb25zdCBxPWQudHJhbnNhY3Rpb24oJ2snKS5vYmplY3RTdG9yZSgnaycpLmdldCgnYWVzJyk7cS5vbnN1Y2Nlc3M9KCk9PnIocS5yZXN1bHR8fG51bGwpO3Eub25lcnJvcj0oKT0+cihudWxsKX0pfWNhdGNoKGUpe3JldHVybiBudWxsfX0KYXN5bmMgZnVuY3Rpb24gaWRiUHV0KHYpe2NvbnN0IGQ9YXdhaXQgZGIoKTthd2FpdCBuZXcgUHJvbWlzZSgocmVzLHJlaik9Pntjb25zdCB0PWQudHJhbnNhY3Rpb24oJ2snLCdyZWFkd3JpdGUnKTt0Lm9iamVjdFN0b3JlKCdrJykucHV0KHYsJ2FlcycpO3Qub25jb21wbGV0ZT1yZXM7dC5vbmVycm9yPSgpPT5yZWoodC5lcnJvcil9KX0KYXN5bmMgZnVuY3Rpb24gc3RvcmVkKCl7Y29uc3Qgdj1hd2FpdCBpZGJHZXQoKTtpZih2JiZ2LnM9PT1HLnMmJnYua2V5KXJldHVybiB2LmtleTtjb25zdCByYXc9bG9jYWxTdG9yYWdlLmdldEl0ZW0oJ3ZlbG94LmdhdGVSYXcnKTtpZihyYXcpdHJ5e2NvbnN0IG89SlNPTi5wYXJzZShyYXcpO2lmKG8ucz09PUcucylyZXR1cm4gYXdhaXQgQy5pbXBvcnRLZXkoJ3JhdycsdWIoby5rKSwnQUVTLUdDTScsZmFsc2UsWydlbmNyeXB0JywnZGVjcnlwdCddKX1jYXRjaChlKXt9cmV0dXJuIG51bGx9CmFzeW5jIGZ1bmN0aW9uIGRlcml2ZShwdyxleHRyYWN0YWJsZSl7Y29uc3QgYmFzZT1hd2FpdCBDLmltcG9ydEtleSgncmF3Jyx0ZS5lbmNvZGUocHcpLCdQQktERjInLGZhbHNlLFsnZGVyaXZlS2V5J10pO3JldHVybiBDLmRlcml2ZUtleSh7bmFtZTonUEJLREYyJyxoYXNoOidTSEEtMjU2JyxzYWx0OnViKEcucyksaXRlcmF0aW9uczpHLm59LGJhc2Use25hbWU6J0FFUy1HQ00nLGxlbmd0aDoyNTZ9LGV4dHJhY3RhYmxlLFsnZW5jcnlwdCcsJ2RlY3J5cHQnXSl9CmFzeW5jIGZ1bmN0aW9uIG9wZW5Cb3goa2V5KXsKICBjb25zdCBwdD1hd2FpdCBDLmRlY3J5cHQoe25hbWU6J0FFUy1HQ00nLGl2OnViKEcuaSl9LGtleSx1YihHLmMpKTsKICBjb25zdCBodG1sPWF3YWl0IG5ldyBSZXNwb25zZShuZXcgQmxvYihbcHRdKS5zdHJlYW0oKS5waXBlVGhyb3VnaChuZXcgRGVjb21wcmVzc2lvblN0cmVhbSgnZ3ppcCcpKSkudGV4dCgpOwogIHdpbmRvdy5fX3ZlbG94R2F0ZT0xO3dpbmRvdy5fX3ZlbG94U3JjPWh0bWw7dHJ5e3Nlc3Npb25TdG9yYWdlLnNldEl0ZW0oJ3ZlbG94LmdhdGVkJywnMScpfWNhdGNoKGUpe30KICBkb2N1bWVudC5vcGVuKCk7ZG9jdW1lbnQud3JpdGUoaHRtbCk7ZG9jdW1lbnQuY2xvc2UoKX0KZnVuY3Rpb24gYXNrKG1zZyl7JCgnZycpLmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGUnKTtpZihtc2cpJCgnZScpLnRleHRDb250ZW50PW1zZztzZXRUaW1lb3V0KCgpPT4kKCdwdycpLmZvY3VzKCksMzAwKX0KJCgnZicpLm9uc3VibWl0PWFzeW5jIGV2PT57ZXYucHJldmVudERlZmF1bHQoKTtjb25zdCBiPSQoJ2InKTtiLmRpc2FibGVkPXRydWU7Yi50ZXh0Q29udGVudD0nUHLDvGZlIOKApic7JCgnZScpLnRleHRDb250ZW50PScnOwogIGNvbnN0IHB3PSQoJ3B3JykudmFsdWU7bGV0IGtleTsKICB0cnl7a2V5PWF3YWl0IGRlcml2ZShwdyxmYWxzZSk7YXdhaXQgQy5kZWNyeXB0KHtuYW1lOidBRVMtR0NNJyxpdjp1YihHLmkpfSxrZXksdWIoRy5jKSl9CiAgY2F0Y2goZSl7Yi5kaXNhYmxlZD1mYWxzZTtiLnRleHRDb250ZW50PSdFbnRzcGVycmVuJzskKCdlJykudGV4dENvbnRlbnQ9J0ZhbHNjaGVzIFBhc3N3b3J0Jztjb25zdCBmPSQoJ2YnKTtmLmNsYXNzTGlzdC5yZW1vdmUoJ3NoYWtlJyk7dm9pZCBmLm9mZnNldFdpZHRoO2YuY2xhc3NMaXN0LmFkZCgnc2hha2UnKTskKCdwdycpLnNlbGVjdCgpO3JldHVybn0KICB0cnl7aWYoJCgncmVtJykuY2hlY2tlZCl7dHJ5e2F3YWl0IGlkYlB1dCh7a2V5LHM6Ry5zLG46Ry5ufSl9Y2F0Y2goZSl7Y29uc3QgeGs9YXdhaXQgZGVyaXZlKHB3LHRydWUpLHJhdz1uZXcgVWludDhBcnJheShhd2FpdCBDLmV4cG9ydEtleSgncmF3Jyx4aykpO2xldCBzPScnO3Jhdy5mb3JFYWNoKGM9PnMrPVN0cmluZy5mcm9tQ2hhckNvZGUoYykpO2xvY2FsU3RvcmFnZS5zZXRJdGVtKCd2ZWxveC5nYXRlUmF3JyxKU09OLnN0cmluZ2lmeSh7czpHLnMsbjpHLm4sazpidG9hKHMpfSkpfX0KICAgIGIudGV4dENvbnRlbnQ9J8OWZmZuZSDigKYnO2F3YWl0IG9wZW5Cb3goa2V5KX0KICBjYXRjaChlKXtiLmRpc2FibGVkPWZhbHNlO2IudGV4dENvbnRlbnQ9J0VudHNwZXJyZW4nOyQoJ2UnKS50ZXh0Q29udGVudD0nS29ubnRlIG5pY2h0IMO2ZmZuZW46ICcrKGUubWVzc2FnZXx8ZSl9fTsKKGFzeW5jKCk9PntpZighd2luZG93LmNyeXB0b3x8IUN8fHR5cGVvZiBEZWNvbXByZXNzaW9uU3RyZWFtPT09J3VuZGVmaW5lZCcpe2FzaygnRGllc2VyIEJyb3dzZXIgaXN0IHp1IGFsdCBmw7xyIFZFTE9YIChpT1MgMTYuNCsgbsO2dGlnKS4nKTtyZXR1cm59CiAgY29uc3Qgaz1hd2FpdCBzdG9yZWQoKTtpZihrKXt0cnl7YXdhaXQgb3BlbkJveChrKTtyZXR1cm59Y2F0Y2goZSl7fX1hc2soKX0pKCk7Cn0pKCk7Cjwvc2NyaXB0Pgo8L2JvZHk+PC9odG1sPgo=';
+const gateDb=()=>new Promise((res,rej)=>{const r=indexedDB.open('velox-gate',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function gGet(){try{const d=await gateDb();const v=await new Promise(r=>{const q=d.transaction('k').objectStore('k').get('aes');q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)});if(v)return v}catch(e){}
+  const raw=localStorage.getItem('velox.gateRaw');if(raw){const o=JSON.parse(raw),u=Uint8Array.from(atob(o.k),c=>c.charCodeAt(0));return{s:o.s,n:o.n,key:await crypto.subtle.importKey('raw',u,'AES-GCM',false,['encrypt','decrypt'])}}return null}
+async function gPut(v,rawKey){try{const d=await gateDb();await new Promise((res,rej)=>{const t=d.transaction('k','readwrite');t.objectStore('k').put(v,'aes');t.oncomplete=res;t.onerror=()=>rej(t.error)});localStorage.removeItem('velox.gateRaw')}
+  catch(e){let x='';new Uint8Array(rawKey).forEach(c=>x+=String.fromCharCode(c));localStorage.setItem('velox.gateRaw',JSON.stringify({s:v.s,n:v.n,k:btoa(x)}))}}
+async function gForget(){localStorage.removeItem('velox.gateRaw');try{const d=await gateDb();await new Promise(r=>{const t=d.transaction('k','readwrite');t.objectStore('k').delete('aes');t.oncomplete=r;t.onerror=r})}catch(e){}}
+async function gBuild(plain){const G=await gGet();if(!G)throw new Error('Kein Schlüssel auf diesem Gerät');const ver=(plain.match(/VERSION='([\d.]+)'/)||[])[1];if(!ver||!/velox\.v1/.test(plain))throw new Error('Das ist keine VELOX-Datei');
+  const gz=new Uint8Array(await new Response(new Blob([plain]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},G.key,gz);
+  const tpl=decodeURIComponent(escape(atob(GATE_TPL)));
+  return{ver,html:tpl.split('__VER__').join(ver).replace('__G__',JSON.stringify({s:G.s,n:G.n,i:gB64(iv),c:gB64(ct)}))}}
+function repoInfo(){const o=JSON.parse(localStorage.getItem('velox.repo')||'null');if(o&&o.owner)return o;const h=location.hostname.match(/^([^.]+)\.github\.io$/i),seg=location.pathname.split('/').filter(Boolean);
+  return{owner:h?h[1]:'',repo:h?(seg.length&&!/\.html$/.test(seg[0])?seg[0]:location.hostname):''}}
+async function ghRepoPut(path,content,msg){const R=repoInfo(),tok=localStorage.getItem('velox.repoToken');if(!tok||!R.owner||!R.repo)throw new Error('GitHub-Upload nicht eingerichtet');
+  const H={Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'},u=`https://api.github.com/repos/${R.owner}/${R.repo}/contents/${path}`;
+  let sha;const g=await fetch(u+'?t='+Date.now(),{headers:H,cache:'no-store'});if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('GitHub: '+g.status+(g.status===401?' – Token ungültig':g.status===403||g.status===404?' – Token hat keinen Zugriff aufs Repo':''));
+  const p=await fetch(u,{method:'PUT',headers:H,body:JSON.stringify({message:msg,content:btoa(unescape(encodeURIComponent(content))),sha})});if(!p.ok)throw new Error('Upload fehlgeschlagen: '+p.status)}
+async function gDeliver(out,why){
+  if(localStorage.getItem('velox.repoToken')&&isOnline()){try{toast('⬆️ Lade verschlüsselt zu GitHub …');await ghRepoPut('index.html',out.html,`VELOX ${out.ver} (verschlüsselt)`);
+    openSheet(`${sheetHead('Fertig 🔒')}<div class="small" style="margin-top:8px">${why} <b>VELOX ${out.ver}</b> liegt jetzt verschlüsselt auf GitHub. In ca. 1 Minute ist sie live.</div><div class="tiny muted" style="margin-top:10px">Auf GitHub ist nur noch ein verschlüsselter Block zu sehen – ohne dein Passwort kein Inhalt.</div><button class="btn acc full" style="margin-top:14px" data-act="close">Super</button>`);return}
+    catch(e){toast(ic('warn')+' '+e.message,4000)}}
+  const f=new File([out.html],'index.html',{type:'text/html'});
+  openSheet(`${sheetHead('Geschützte Datei bereit')}<div class="small" style="margin-top:8px">${why} Jetzt die <b>index.html</b> speichern und wie gewohnt auf GitHub hochladen (alte ersetzen).</div>
+    <button class="btn acc full" style="margin-top:14px;padding:15px" data-act="gShare">📤 Teilen / In Dateien sichern</button>
+    <button class="btn full" style="margin-top:8px" data-act="gDl">⬇️ Herunterladen</button>
+    <div class="tiny muted" style="margin-top:10px">Bequemer: unter „GitHub-Upload“ einmal einen Token hinterlegen – dann lädt VELOX die geschützte Version selbst hoch.</div>`);
+  GOUT=f}
+let GOUT=null;
+function openGSetup(){openSheet(`${sheetHead(gated()?'Passwort ändern':'Passwortschutz einrichten')}
+  <div class="small" style="margin-top:6px">Danach muss jeder, der die Seite öffnet, zuerst <b>dein Passwort</b> eingeben. Auf GitHub liegt nur noch ein verschlüsselter Block. Das Passwort bleibt bei dir – es verlässt nie dieses Gerät.</div>
+  <div class="field"><label>Passwort</label><input class="inp" type="password" id="gp1" autocomplete="new-password" placeholder="mind. 10 Zeichen"></div>
+  <div class="field"><label>Wiederholen</label><input class="inp" type="password" id="gp2" autocomplete="new-password"></div>
+  <div class="tiny" id="gpS" style="margin:-4px 0 10px;font-weight:800"></div>
+  <button class="btn acc full" style="padding:15px" data-act="gMake">🔐 ${gated()?'Neues Passwort setzen':'Schützen'}</button>
+  <div class="tiny muted" style="margin-top:10px">Dieses Gerät merkt sich den Schlüssel sofort. Andere Geräte (z. B. iPad) fragen einmal nach dem Passwort. Gut merken – z. B. im iPhone-Schlüsselbund. Deine Trainingsdaten sind davon unabhängig und gehen nie verloren.</div>`);
+  const p=$('#gp1');p.oninput=()=>{const v=p.value,sc=(v.length>=10)+(v.length>=14)+(/[A-Z]/.test(v)&&/[a-z]/.test(v))+/\d/.test(v)+/[^A-Za-z0-9]/.test(v);$('#gpS').textContent=v?['🔴 zu kurz','🟠 okay','🟡 gut','🟢 stark','🟢 sehr stark','🟢 sehr stark'][sc]:''}}
+async function gMake(){const a=$('#gp1').value,b=$('#gp2').value;if(a.length<10){toast('Mindestens 10 Zeichen');return}if(a!==b){toast('Passwörter stimmen nicht überein');return}
+  const btn=$('#sheet [data-act=gMake]');btn.disabled=true;btn.textContent='Verschlüssele …';
+  try{const C=crypto.subtle,salt=crypto.getRandomValues(new Uint8Array(16)),n=600000,s=gB64(salt);
+    const base=await C.importKey('raw',new TextEncoder().encode(a),'PBKDF2',false,['deriveKey']);
+    const xk=await C.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:n},base,{name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+    const raw=await C.exportKey('raw',xk),key=await C.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
+    const plain=gated()&&window.__veloxSrc?window.__veloxSrc:await (await fetch('index.html?src='+Date.now(),{cache:'no-store'})).text();
+    if(/__veloxGate|const G=\{/.test(plain)&&!/velox\.v1/.test(plain))throw new Error('Quelle nicht lesbar – bitte App neu laden');
+    await gPut({key,s,n},raw);const out=await gBuild(plain);await gDeliver(out,'🔐 Passwortschutz eingerichtet.')}
+  catch(e){btn.disabled=false;btn.textContent='🔐 Schützen';toast(ic('warn')+' '+(e.message||e),4000)}}
+function openGRepo(){const R=repoInfo();openSheet(`${sheetHead('GitHub-Upload')}
+  <div class="small" style="margin-top:6px">Damit VELOX geschützte Versionen selbst hochladen kann, braucht es einmal einen <b>eigenen Token nur für dieses Repo</b> (nicht der Sync-Token).</div>
+  <div class="card" style="margin-top:10px"><ol class="small" style="margin:0;padding-left:18px;line-height:1.55"><li>GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate</li><li>Repository access: <b>Only select repositories</b> → dein VELOX-Repo</li><li>Permissions → Repository → <b>Contents: Read and write</b></li><li>Token kopieren und hier einfügen</li></ol></div>
+  <div class="f2"><div class="field"><label>GitHub-Name</label><input class="inp" id="grO" value="${esc(R.owner)}" autocapitalize="off"></div><div class="field"><label>Repo</label><input class="inp" id="grR" value="${esc(R.repo)}" autocapitalize="off"></div></div>
+  <div class="field"><label>Token</label><input class="inp" type="password" id="grT" value="${esc(localStorage.getItem('velox.repoToken')||'')}" placeholder="github_pat_…" autocapitalize="off"></div>
+  <button class="btn acc full" data-act="gRepoSave">Speichern</button>
+  <div class="tiny muted" style="margin-top:10px">Der Token bleibt nur auf diesem Gerät (wird nicht synchronisiert).</div>`)}
+function pickUpdate(){let i=$('#gUpdIn');if(!i){i=document.createElement('input');i.type='file';i.id='gUpdIn';i.accept='.html,text/html';i.hidden=true;document.body.appendChild(i)}i.value='';
+  i.onchange=async()=>{const f=i.files[0];if(!f)return;try{const t=await f.text();const out=await gBuild(t);if(cmpVer(out.ver,VERSION)<0&&!confirm(`Die Datei ist älter (${out.ver}) als deine aktuelle Version (${VERSION}). Trotzdem einspielen?`))return;await gDeliver(out,`⬆️ Update ${out.ver} verschlüsselt.`)}catch(e){toast(ic('warn')+' '+(e.message||e),4000)}};i.click()}
 let VF=null;
 function openVac(){const v=S.settings.vac&&vacActive()?S.settings.vac:null;VF={from:v?v.from:ymd(today()),to:v?v.to:ymd(addD(today(),6)),type:v?vacType():'',run:v?v.run!==false:true,bike:v?!!v.bike:false,level:v?v.level||'light':'light'};renderVac()}
 function renderVac(){const days=VF.from&&VF.to&&VF.to>=VF.from?dBetween(parse(VF.from),parse(VF.to))+1:0;
@@ -2293,6 +2380,7 @@ async function checkUpdate(manual){
     if(cmpVer(m[1],VERSION)>0){if(manual)openUpdate();else if(TAB==='home'&&!$('#ov').classList.contains('on'))render()}
     else if(manual){toast(ic('check')+' Du hast die neueste Version (v'+VERSION+')');if(TAB==='set')render()}}
   catch(e){if(manual)toast(ic('warn')+' Update-Prüfung fehlgeschlagen – Internet?')}}
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 async function autoUpdate(force){
   if(location.protocol==='file:')return false;
   if(!force&&Date.now()-(+sessionStorage.getItem('velox.autoChk')||0)<5*60e3)return false;sessionStorage.setItem('velox.autoChk',Date.now());
@@ -2417,6 +2505,20 @@ function act(a,el){const k=el?.dataset?.k;
   if(a.startsWith('tg_')){const key=a.slice(3);S.settings[key]=!S.settings[key];save();render();return}
   switch(a){
     case'close':closeSheet();break;
+    case'netInfo':openSheet(`${sheetHead(isOnline()?'Online':'Offline')}<div style="display:grid;place-items:center;margin:14px 0"><div class="netb ${isOnline()?'':'off'}" style="width:84px;height:84px">${(isOnline()?WIFI_ON:WIFI_OFF).replace('<svg','<svg style="width:42px;height:42px"')}</div></div>
+      <div class="small" style="text-align:center">${isOnline()?'Du bist online. Änderungen werden direkt verschlüsselt synchronisiert.':'Du bist offline. Kein Problem: VELOX funktioniert komplett weiter, alles wird sicher auf dem Gerät gespeichert.'}</div>
+      <div class="card" style="margin-top:14px"><div class="small">${S.meta.syncPending?'⏳ Ungesynchte Änderungen seit '+new Date(S.meta.syncPending).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' – werden automatisch hochgeladen, sobald wieder Netz da ist.':'✅ Keine offenen Änderungen.'}</div>
+      <div class="tiny muted" style="margin-top:8px">Offline nicht verfügbar: Wetter, Screenshot-Texterkennung und Update-Check. Die App selbst ist auf dem Gerät gespeichert und startet auch ohne Netz.</div></div>`);break;
+    case'ocrAllow':{const[w,m]=k.split(':');if(w==='always'){S.settings.ocrOk=true;save()}if(m==='workout')renderForm();else renderMorning();if(w!=='no'){ocrOnce=true;pickShot(m)}break}
+    case'privTog':if(k==='wx'){S.settings.wx.on=!S.settings.wx.on;if(S.settings.wx.on)fetchWx(true)}else S.settings.ocrOk=!S.settings.ocrOk;save();_cache={};render();break;
+    case'gSetup':openGSetup();break;
+    case'gMake':gMake();break;
+    case'gRepo':openGRepo();break;
+    case'gRepoSave':localStorage.setItem('velox.repo',JSON.stringify({owner:$('#grO').value.trim(),repo:$('#grR').value.trim()}));if($('#grT').value.trim())localStorage.setItem('velox.repoToken',$('#grT').value.trim());else localStorage.removeItem('velox.repoToken');closeSheet();toast('✓ GitHub-Upload gespeichert');break;
+    case'gUpd':pickUpdate();break;
+    case'gShare':if(GOUT&&navigator.canShare&&navigator.canShare({files:[GOUT]}))navigator.share({files:[GOUT],title:'VELOX index.html'}).catch(()=>{});else toast('Teilen hier nicht möglich – bitte „Herunterladen“');break;
+    case'gDl':if(GOUT){const u=URL.createObjectURL(GOUT),x=document.createElement('a');x.href=u;x.download='index.html';document.body.appendChild(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}break;
+    case'gForget':if(confirm('Dieses Gerät vergessen? Beim nächsten Öffnen wird das Passwort abgefragt.')){gForget().then(()=>{sessionStorage.removeItem('velox.gated');location.reload()})}break;
     case'vacOpen':openVac();break;
     case'vacType':$$('#sheet [data-vf]').forEach(i=>VF[i.dataset.vf]=i.value);VF.type=k;renderVac();break;
     case'vacTog':$$('#sheet [data-vf]').forEach(i=>VF[i.dataset.vf]=i.value);VF[k]=!VF[k];renderVac();break;
@@ -2452,7 +2554,7 @@ function act(a,el){const k=el?.dataset?.k;
     case'icsOne':{const p=plan().find(x=>x.date===k);if(p){deliverIcs(buildIcs([p],{alarm:ICS.alarm}),'velox-'+k+'.ics');toast('📅 Termin exportiert',2500)}break}
     case'wxIn':S.wxSwap[k]='in';save();closeSheet();render();toast('🚲 Auf die Rolle verlegt');break;
     case'wxOut':S.wxSwap[k]='out';save();closeSheet();render();toast('☀️ Ab nach draußen!');break;
-    case'wxGps':wxGps();break;case'wxSetup':openWxSetup();break;case'wxRefresh':fetchWx(true);break;case'wxSheet':openWxSheet();break;
+    case'wxGps':S.settings.wx.on=true;wxGps();break;case'wxSetup':S.settings.wx.on=true;openWxSetup();break;case'wxRefresh':fetchWx(true);break;case'wxSheet':openWxSheet();break;
     case'wxToggle':S.settings.wx.on=!S.settings.wx.on;save();render();if(S.settings.wx.on)fetchWx(true);break;
     case'bioAsk':S.seen.bioAsk=1;save(true);bioRegister();break;
     case'bioToggle':if(bioOn()){localStorage.removeItem(BIOKEY);toast('Face ID deaktiviert');render()}else bioRegister();break;
@@ -2557,13 +2659,13 @@ function mergeStates(loc,rem){const newer=(rem.updated||0)>(loc.updated||0)?rem:
   if(newer===rem){out.settings.sync=loc.settings.sync}
   out.updated=Math.max(loc.updated||0,rem.updated||0);return out}
 function setSync(st){syncState=st;$$('.syncb').forEach(b=>{b.className='syncb '+st})}
-async function syncNow(silent){if(!syncReady()){if(!silent)openSyncInfo();return}if(syncBusy)return;syncBusy=true;setSync('busy');
+async function syncNow(silent){if(!syncReady()){if(!silent)openSyncInfo();return}if(syncBusy)return;if(!isOnline()){S.meta.syncPending=Date.now();localStorage.setItem(KEY,JSON.stringify(S));setSync('pend');if(!silent)toast('📴 Offline – wird synchronisiert, sobald du wieder Netz hast',3000);return}syncBusy=true;setSync('busy');
   try{const sy=S.settings.sync;const g=await gh('/gists/'+sy.gistId),f=g.files[FILE];
     if(f){let txt=f.content;if(f.truncated)txt=await fetch(f.raw_url).then(r=>r.text());const remote=await decryptPayload(txt);const before=JSON.stringify(S.sessions.length)+S.updated;
       S=mergeStates(S,remote);_cache={};localStorage.setItem(KEY,JSON.stringify(S));if(before!==JSON.stringify(S.sessions.length)+S.updated&&!$('#ov').classList.contains('on'))render()}
     await gh('/gists/'+sy.gistId,{method:'PATCH',body:JSON.stringify({files:{[FILE]:{content:await encryptState(cleanForCloud())}}})});
-    S.settings.sync.last=Date.now();localStorage.setItem(KEY,JSON.stringify(S));setSync('ok');if(!silent){toast('👟 Synchronisiert & verschlüsselt');if(TAB==='set')render()}}
-  catch(e){setSync('err');S.settings.sync.lastErr=e.message;if(!silent)toast(ic('warn')+' '+e.message,3500)}finally{syncBusy=false}}
+    S.settings.sync.last=Date.now();delete S.meta.syncPending;localStorage.setItem(KEY,JSON.stringify(S));setSync('ok');if(!silent){toast('👟 Synchronisiert & verschlüsselt');if(TAB==='set')render()}}
+  catch(e){if(!isOnline()||/fetch|network|Load failed/i.test(e.message)){S.meta.syncPending=Date.now();localStorage.setItem(KEY,JSON.stringify(S));setSync('pend');if(!silent)toast('📴 Kein Netz – wird später synchronisiert',3000)}else{setSync('err');S.settings.sync.lastErr=e.message;if(!silent)toast(ic('warn')+' '+e.message,3500)}}finally{syncBusy=false}}
 async function syncSetup(){collectSync();const y=S.settings.sync;
   if(!y.token){toast('Bitte GitHub-Token eintragen');return}if(!y.pass||y.pass.length<8){toast('Sync-Passwort: mind. 8 Zeichen');return}
   if(!window.crypto?.subtle){toast('Verschlüsselung braucht https (GitHub-Pages-Adresse öffnen)');return}
